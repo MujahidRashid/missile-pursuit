@@ -18,6 +18,7 @@ let plane = null;
 let level = 1;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
+let loseReason = '';
 let lastTime = 0;
 
 function resize() {
@@ -55,12 +56,25 @@ function update(dt) {
             explosionProgress = 0;
         }
 
-        if (!missile.alive) {
+        const FLARE_HIT_DIST = 18;
+        for (const flare of plane.flares) {
+            if (distance(missile, flare) < FLARE_HIT_DIST) {
+                state = STATE.LOSE;
+                loseReason = 'HIT BY FLARE';
+                explosionPos = { x: missile.x, y: missile.y };
+                explosionProgress = 0;
+                missile.alive = false;
+                break;
+            }
+        }
+
+        if (!missile.alive && state === STATE.PLAYING) {
             state = STATE.LOSE;
+            loseReason = 'OUT OF ENERGY';
         }
     }
 
-    if (state === STATE.WIN) {
+    if (state === STATE.WIN || (state === STATE.LOSE && loseReason === 'HIT BY FLARE')) {
         explosionProgress = Math.min(explosionProgress + dt * 2, 1);
     }
 }
@@ -93,8 +107,15 @@ function draw() {
         }
     }
 
+    if (plane && plane.flares.length > 0) {
+        renderer.drawFlares(plane.flares);
+    }
+
     if (state === STATE.LOSE) {
-        renderer.drawMessage('OUT OF ENERGY', 'Tap to retry', canvas.width, canvas.height);
+        if (loseReason === 'HIT BY FLARE') {
+            renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
+        }
+        renderer.drawMessage(loseReason, 'Tap to retry', canvas.width, canvas.height);
     }
 }
 

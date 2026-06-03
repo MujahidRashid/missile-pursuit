@@ -15,10 +15,16 @@ export class Plane {
         this.dirChangeInterval = 2.0;
         this.trail = [];
         this.maxTrailLength = 40;
+
+        this.flares = [];
+        this.flareCooldown = 0;
+        this.flareCooldownTime = 2.5;
+        this.flareDeployDist = 180;
     }
 
     update(dt, missile) {
         this.dirChangeTimer += dt;
+        this.flareCooldown -= dt;
 
         if (this.evasionLevel === 1) {
             this.behaviorLevel1(dt);
@@ -26,6 +32,25 @@ export class Plane {
             this.behaviorLevel2(dt, missile);
         } else {
             this.behaviorLevel3(dt, missile);
+        }
+
+        if (missile && missile.alive && this.flareCooldown <= 0) {
+            const dist = distance(this, missile);
+            if (dist < this.flareDeployDist) {
+                this.deployFlares();
+                this.flareCooldown = this.flareCooldownTime;
+            }
+        }
+
+        for (let i = this.flares.length - 1; i >= 0; i--) {
+            const f = this.flares[i];
+            f.x += Math.cos(f.angle) * f.speed * dt;
+            f.y += Math.sin(f.angle) * f.speed * dt;
+            f.life -= dt;
+            f.speed *= 0.97;
+            if (f.life <= 0) {
+                this.flares.splice(i, 1);
+            }
         }
 
         const angleDiff = normalizeAngle(this.targetAngle - this.angle);
@@ -40,6 +65,22 @@ export class Plane {
         this.trail.push({ x: this.x, y: this.y });
         if (this.trail.length > this.maxTrailLength) {
             this.trail.shift();
+        }
+    }
+
+    deployFlares() {
+        const count = 3 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < count; i++) {
+            const spread = (i / (count - 1) - 0.5) * Math.PI;
+            this.flares.push({
+                x: this.x,
+                y: this.y,
+                angle: this.angle + Math.PI + spread,
+                speed: randomRange(60, 120),
+                life: randomRange(2.0, 3.5),
+                maxLife: 3.5,
+                radius: randomRange(6, 10)
+            });
         }
     }
 

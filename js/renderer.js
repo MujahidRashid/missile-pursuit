@@ -175,6 +175,29 @@ export class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawFlares(flares) {
+        const ctx = this.ctx;
+        for (const f of flares) {
+            const alpha = Math.min(f.life / f.maxLife, 1);
+            const flicker = 0.7 + Math.random() * 0.3;
+
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.radius * alpha, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 240, 100, ${alpha * flicker})`;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.radius * 0.5 * alpha, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.radius * 1.5 * alpha, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 200, 50, ${alpha * 0.2})`;
+            ctx.fill();
+        }
+    }
+
     drawExplosion(x, y, progress) {
         const ctx = this.ctx;
         const maxRadius = 40;
