@@ -1,6 +1,7 @@
 import { Missile } from './missile.js';
 import { Plane } from './plane.js';
 import { SAMSite } from './sam.js';
+import { Terrain } from './terrain.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { distance } from './utils.js';
@@ -17,6 +18,7 @@ let state = STATE.MENU;
 let missile = null;
 let plane = null;
 let sam = null;
+let terrain = null;
 let level = 1;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
@@ -34,12 +36,14 @@ function startLevel() {
     const w = canvas.width;
     const h = canvas.height;
 
-    missile = new Missile(w / 2, h * 0.85);
-    plane = new Plane(w / 2, h * 0.2, w, h);
+    terrain = new Terrain(w, h);
 
-    const samX = Math.random() > 0.5 ? w * 0.15 : w * 0.85;
-    const samY = h * 0.4 + Math.random() * h * 0.2;
-    sam = new SAMSite(samX, samY);
+    const samSide = Math.random() > 0.5 ? 'right' : 'left';
+    const samPos = terrain.getSAMPosition(samSide);
+    sam = new SAMSite(samPos.x, samPos.y);
+
+    missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
+    plane = new Plane(w / 2, h * 0.2, w, h);
 
     plane.evasionLevel = Math.min(level, 3);
     plane.speed = 130 + level * 20;
@@ -87,6 +91,14 @@ function update(dt) {
             }
         }
 
+        if (missile.alive && missile.y >= terrain.getGroundY(missile.x)) {
+            state = STATE.LOSE;
+            loseReason = 'CRASHED';
+            explosionPos = { x: missile.x, y: missile.y };
+            explosionProgress = 0;
+            missile.alive = false;
+        }
+
         if (!missile.alive && state === STATE.PLAYING) {
             state = STATE.LOSE;
             loseReason = 'OUT OF ENERGY';
@@ -105,6 +117,8 @@ function draw() {
         renderer.drawMessage('MISSILE PURSUIT', 'Tap to launch', canvas.width, canvas.height);
         return;
     }
+
+    if (terrain) renderer.drawTerrain(terrain);
 
     if (plane) renderer.drawPlane(plane);
     if (missile) renderer.drawMissile(missile);

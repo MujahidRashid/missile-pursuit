@@ -175,6 +175,37 @@ export class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawTerrain(terrain) {
+        const ctx = this.ctx;
+        const points = terrain.points;
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.lineTo(terrain.width, terrain.height);
+        ctx.lineTo(0, terrain.height);
+        ctx.closePath();
+
+        const gradient = ctx.createLinearGradient(0, terrain.height - terrain.groundHeight * 1.5, 0, terrain.height);
+        gradient.addColorStop(0, '#1a3322');
+        gradient.addColorStop(0.4, '#0f2618');
+        gradient.addColorStop(1, '#0a1a10');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // terrain edge highlight
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.strokeStyle = '#2a5533';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     drawSAM(sam) {
         const ctx = this.ctx;
 
