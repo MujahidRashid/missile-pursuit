@@ -1,5 +1,6 @@
 import { Missile } from './missile.js';
 import { Plane } from './plane.js';
+import { SAMSite } from './sam.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { distance } from './utils.js';
@@ -15,6 +16,7 @@ const STATE = { MENU: 0, PLAYING: 1, WIN: 2, LOSE: 3 };
 let state = STATE.MENU;
 let missile = null;
 let plane = null;
+let sam = null;
 let level = 1;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
@@ -35,6 +37,10 @@ function startLevel() {
     missile = new Missile(w / 2, h * 0.85);
     plane = new Plane(w / 2, h * 0.2, w, h);
 
+    const samX = Math.random() > 0.5 ? w * 0.15 : w * 0.85;
+    const samY = h * 0.4 + Math.random() * h * 0.2;
+    sam = new SAMSite(samX, samY);
+
     plane.evasionLevel = Math.min(level, 3);
     plane.speed = 130 + level * 20;
 
@@ -49,6 +55,19 @@ function update(dt) {
 
         missile.update(dt);
         plane.update(dt, missile);
+        sam.update(dt, missile);
+
+        const SAM_HIT_DIST = 16;
+        for (const rocket of sam.rockets) {
+            if (distance(missile, rocket) < SAM_HIT_DIST) {
+                state = STATE.LOSE;
+                loseReason = 'SHOT DOWN BY SAM';
+                explosionPos = { x: missile.x, y: missile.y };
+                explosionProgress = 0;
+                missile.alive = false;
+                break;
+            }
+        }
 
         if (distance(missile, plane) < HIT_DISTANCE) {
             state = STATE.WIN;
@@ -74,7 +93,7 @@ function update(dt) {
         }
     }
 
-    if (state === STATE.WIN || (state === STATE.LOSE && loseReason === 'HIT BY FLARE')) {
+    if (state === STATE.WIN || (state === STATE.LOSE && loseReason !== 'OUT OF ENERGY')) {
         explosionProgress = Math.min(explosionProgress + dt * 2, 1);
     }
 }
@@ -111,8 +130,12 @@ function draw() {
         renderer.drawFlares(plane.flares);
     }
 
+    if (sam) {
+        renderer.drawSAM(sam);
+    }
+
     if (state === STATE.LOSE) {
-        if (loseReason === 'HIT BY FLARE') {
+        if (loseReason !== 'OUT OF ENERGY') {
             renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
         }
         renderer.drawMessage(loseReason, 'Tap to retry', canvas.width, canvas.height);
