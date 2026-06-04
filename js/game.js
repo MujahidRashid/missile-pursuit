@@ -124,28 +124,6 @@ function update(dt) {
         }
     }
 
-    if (state === STATE.RELAUNCH) {
-        const w = canvas.width;
-        const jet = friendlyJet;
-
-        plane.update(dt, null);
-        for (const s of sams) s.update(dt, null);
-
-        if (jet && jet.phase === 'chase') {
-            jet.x += Math.cos(jet.angle) * jet.speed * dt;
-            jet.y += Math.sin(jet.angle) * jet.speed * dt;
-
-            if (jet.x >= w * 0.15) {
-                jet.fired = true;
-                jet.phase = 'exit';
-                jet.angle = -0.6;
-                jet.speed = 400;
-                missile = new Missile(jet.x + 20, jet.y, 0);
-                missile.graceTimer = 0.5;
-                state = STATE.PLAYING;
-            }
-        }
-    }
 
     if (state === STATE.PLAYING) {
         if (input.active) {
@@ -185,17 +163,19 @@ function update(dt) {
                 explosionProgress = 0;
             } else {
                 plane.speed += 20;
-                missile = null;
-                const relaunchY = plane.y + (Math.random() - 0.5) * 60;
+                explosionPos = { x: plane.x, y: plane.y };
+                explosionProgress = 0;
+                const w = canvas.width;
+                missile = new Missile(w * 0.1, canvas.height * 0.7, 0);
+                missile.graceTimer = 0.8;
                 friendlyJet = {
-                    x: -60,
-                    y: relaunchY,
-                    angle: 0,
-                    speed: 300,
-                    fired: false,
-                    phase: 'chase'
+                    x: w * 0.1 - 30,
+                    y: canvas.height * 0.7,
+                    angle: -0.6,
+                    speed: 400,
+                    fired: true,
+                    phase: 'exit'
                 };
-                state = STATE.RELAUNCH;
             }
         }
 
