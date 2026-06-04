@@ -14,7 +14,8 @@ export class Missile {
         this.alive = true;
         this.targetAngle = this.angle;
         this.turnSpeed = 3.5; // radians per second
-        this.coneHalfAngle = Math.PI / 4; // 45 degrees each side = 90 degree cone
+        this.coneHalfAngle = Math.PI / 4;
+        this.graceTimer = 0;
     }
 
     isInCone(target, detectionRange = 800) {

@@ -108,6 +108,7 @@ function update(dt) {
             jet.angle = -0.6;
             jet.speed = 400;
             missile = new Missile(jet.x + 20, jet.y, 0);
+            missile.graceTimer = 0.5;
 
             state = STATE.PLAYING;
             plane.introMode = false;
@@ -140,6 +141,7 @@ function update(dt) {
                 jet.angle = -0.6;
                 jet.speed = 400;
                 missile = new Missile(jet.x + 20, jet.y, 0);
+                missile.graceTimer = 0.5;
                 state = STATE.PLAYING;
             }
         }
@@ -173,7 +175,9 @@ function update(dt) {
             if (samHit) break;
         }
 
-        if (distance(missile, plane) < HIT_DISTANCE) {
+        if (missile.graceTimer > 0) {
+            missile.graceTimer -= dt;
+        } else if (distance(missile, plane) < HIT_DISTANCE) {
             plane.hitPoints--;
             if (plane.hitPoints <= 0) {
                 state = STATE.WIN;
