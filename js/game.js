@@ -13,7 +13,7 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 25;
-const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, WIN: 5, LOSE: 6 };
+const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7 };
 
 let state = STATE.MENU;
 let missile = null;
@@ -118,6 +118,28 @@ function update(dt) {
         }
     }
 
+    if (state === STATE.RELAUNCH) {
+        const w = canvas.width;
+        const jet = friendlyJet;
+
+        plane.update(dt, null);
+        for (const s of sams) s.update(dt, null);
+
+        if (jet && jet.phase === 'chase') {
+            jet.x += Math.cos(jet.angle) * jet.speed * dt;
+            jet.y += Math.sin(jet.angle) * jet.speed * dt;
+
+            if (jet.x >= w * 0.15) {
+                jet.fired = true;
+                jet.phase = 'exit';
+                jet.angle = -0.6;
+                jet.speed = 400;
+                missile = new Missile(jet.x + 20, jet.y, 0);
+                state = STATE.PLAYING;
+            }
+        }
+    }
+
     if (state === STATE.PLAYING) {
         if (input.active) {
             missile.setTarget(input.x, input.y);
@@ -151,10 +173,18 @@ function update(dt) {
                 explosionPos = { x: plane.x, y: plane.y };
                 explosionProgress = 0;
             } else {
-                // hit but not destroyed — reset missile from ground
-                const w = canvas.width;
-                missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
                 plane.speed += 20;
+                missile = null;
+                const relaunchY = plane.y + (Math.random() - 0.5) * 60;
+                friendlyJet = {
+                    x: -60,
+                    y: relaunchY,
+                    angle: 0,
+                    speed: 300,
+                    fired: false,
+                    phase: 'chase'
+                };
+                state = STATE.RELAUNCH;
             }
         }
 
