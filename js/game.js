@@ -53,6 +53,7 @@ function startLevel() {
     }
 
     plane = new Plane(w / 2, h * 0.2, w, h);
+    plane.terrain = terrain;
     plane.aircraftId = ac.id;
     plane.speed = ac.speed + level * 15;
     plane.evasionLevel = Math.min(ac.evasion, 3);

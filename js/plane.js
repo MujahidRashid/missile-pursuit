@@ -23,6 +23,7 @@ export class Plane {
         this.flareCount = 3;
         this.hitPoints = 1;
         this.aircraftId = 'f16';
+        this.terrain = null;
     }
 
     update(dt, missile) {
@@ -139,6 +140,14 @@ export class Plane {
         if (this.x < margin) this.targetAngle = 0;
         if (this.x > this.canvasWidth - margin) this.targetAngle = Math.PI;
         if (this.y < margin) this.targetAngle = Math.PI / 2;
-        if (this.y > this.canvasHeight - margin) this.targetAngle = -Math.PI / 2;
+
+        const groundLimit = this.terrain
+            ? this.terrain.getGroundY(this.x) - 60
+            : this.canvasHeight - margin;
+
+        if (this.y > groundLimit) {
+            this.y = groundLimit;
+            this.targetAngle = -Math.PI / 2;
+        }
     }
 }
