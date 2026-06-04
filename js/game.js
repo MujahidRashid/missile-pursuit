@@ -13,16 +13,17 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 25;
-const STATE = { MENU: 0, SELECT: 1, PLAYING: 2, WIN: 3, LOSE: 4 };
+const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, PLAYING: 3, WIN: 4, LOSE: 5 };
 
 let state = STATE.MENU;
 let missile = null;
 let plane = null;
-let sam = null;
+let sams = [];
 let terrain = null;
 let level = 1;
 let selectedAircraft = null;
 let selectIndex = 0;
+let samCount = 1;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
 let loseReason = '';
@@ -42,9 +43,14 @@ function startLevel() {
 
     terrain = new Terrain(w, h);
 
-    const samSide = Math.random() > 0.5 ? 'right' : 'left';
-    const samPos = terrain.getSAMPosition(samSide);
-    sam = new SAMSite(samPos.x, samPos.y);
+    sams = [];
+    for (let i = 0; i < samCount; i++) {
+        const xPos = w * (0.1 + (0.8 / (samCount + 1)) * (i + 1));
+        const yPos = terrain.getGroundY(xPos);
+        const s = new SAMSite(xPos, yPos);
+        s.fireTimer = 1.5 + i * 0.8;
+        sams.push(s);
+    }
 
     missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
     plane = new Plane(w / 2, h * 0.2, w, h);
@@ -69,18 +75,23 @@ function update(dt) {
 
         missile.update(dt);
         plane.update(dt, missile);
-        sam.update(dt, missile);
+        for (const s of sams) s.update(dt, missile);
 
         const SAM_HIT_DIST = 16;
-        for (const rocket of sam.rockets) {
-            if (distance(missile, rocket) < SAM_HIT_DIST) {
-                state = STATE.LOSE;
-                loseReason = 'SHOT DOWN BY SAM';
-                explosionPos = { x: missile.x, y: missile.y };
-                explosionProgress = 0;
-                missile.alive = false;
-                break;
+        let samHit = false;
+        for (const s of sams) {
+            for (const rocket of s.rockets) {
+                if (distance(missile, rocket) < SAM_HIT_DIST) {
+                    state = STATE.LOSE;
+                    loseReason = 'SHOT DOWN BY SAM';
+                    explosionPos = { x: missile.x, y: missile.y };
+                    explosionProgress = 0;
+                    missile.alive = false;
+                    samHit = true;
+                    break;
+                }
             }
+            if (samHit) break;
         }
 
         if (distance(missile, plane) < HIT_DISTANCE) {
@@ -141,6 +152,11 @@ function draw() {
         return;
     }
 
+    if (state === STATE.SETTINGS) {
+        renderer.drawSettings(samCount, canvas.width, canvas.height);
+        return;
+    }
+
     if (terrain) renderer.drawTerrain(terrain);
 
     if (plane) renderer.drawPlane(plane);
@@ -168,8 +184,8 @@ function draw() {
         renderer.drawFlares(plane.flares);
     }
 
-    if (sam) {
-        renderer.drawSAM(sam);
+    for (const s of sams) {
+        renderer.drawSAM(s);
     }
 
     if (state === STATE.LOSE) {
@@ -227,6 +243,20 @@ function hitButton(btn, tx, ty) {
     return tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h;
 }
 
+function getSettingsButtons() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnSize = Math.min(w * 0.12, 50);
+    const centerY = h * 0.45;
+    const launchW = w * 0.4;
+    const launchH = h * 0.07;
+    return {
+        minus: { x: w * 0.25 - btnSize / 2, y: centerY - btnSize / 2, w: btnSize, h: btnSize },
+        plus: { x: w * 0.75 - btnSize / 2, y: centerY - btnSize / 2, w: btnSize, h: btnSize },
+        launch: { x: (w - launchW) / 2, y: h * 0.65, w: launchW, h: launchH }
+    };
+}
+
 function handleTap() {
     if (state === STATE.MENU) {
         state = STATE.SELECT;
@@ -239,9 +269,20 @@ function handleTap() {
                 selectIndex = box.index;
                 selectedAircraft = AIRCRAFT[selectIndex];
                 level = 1;
-                startLevel();
+                state = STATE.SETTINGS;
                 return;
             }
+        }
+    } else if (state === STATE.SETTINGS) {
+        const btns = getSettingsButtons();
+        const tx = input.x;
+        const ty = input.y;
+        if (hitButton(btns.minus, tx, ty)) {
+            samCount = Math.max(1, samCount - 1);
+        } else if (hitButton(btns.plus, tx, ty)) {
+            samCount = Math.min(5, samCount + 1);
+        } else if (hitButton(btns.launch, tx, ty)) {
+            startLevel();
         }
     } else if (state === STATE.WIN && explosionProgress >= 1) {
         const btns = getEndButtons();

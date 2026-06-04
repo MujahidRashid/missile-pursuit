@@ -533,6 +533,85 @@ export class Renderer {
         ctx.restore();
     }
 
+    drawSettings(samCount, width, height) {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('MISSION SETTINGS', width / 2, height * 0.15);
+
+        // SAM count label
+        ctx.fillStyle = '#8899aa';
+        ctx.font = '14px monospace';
+        ctx.fillText('SAM SITES', width / 2, height * 0.32);
+
+        // minus button
+        const btnSize = Math.min(width * 0.12, 50);
+        const centerY = height * 0.45;
+
+        ctx.fillStyle = '#1a2233';
+        ctx.fillRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
+        ctx.strokeStyle = '#4466aa';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('-', width * 0.25, centerY + 8);
+
+        // count display
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = 'bold 40px monospace';
+        ctx.fillText(samCount.toString(), width / 2, centerY + 14);
+
+        // SAM icons
+        const iconSpacing = 20;
+        const totalIconW = (samCount - 1) * iconSpacing;
+        const iconStartX = width / 2 - totalIconW / 2;
+        for (let i = 0; i < samCount; i++) {
+            const ix = iconStartX + i * iconSpacing;
+            const iy = centerY + 35;
+            ctx.fillStyle = '#445566';
+            ctx.fillRect(ix - 4, iy, 8, 5);
+            ctx.fillStyle = '#667788';
+            ctx.fillRect(ix - 1, iy - 6, 2, 6);
+        }
+
+        // plus button
+        ctx.fillStyle = '#1a2233';
+        ctx.fillRect(width * 0.75 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
+        ctx.strokeStyle = '#4466aa';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(width * 0.75 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px monospace';
+        ctx.fillText('+', width * 0.75, centerY + 8);
+
+        // difficulty hint
+        ctx.fillStyle = '#556677';
+        ctx.font = '11px monospace';
+        const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
+        ctx.fillText(hints[samCount] || '', width / 2, height * 0.56);
+
+        // launch button
+        const launchW = width * 0.4;
+        const launchH = height * 0.07;
+        const launchX = (width - launchW) / 2;
+        const launchY = height * 0.65;
+
+        const pulse = 0.8 + Math.sin(t * 3) * 0.2;
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect(launchX, launchY, launchW, launchH);
+        ctx.strokeStyle = `rgba(68, 180, 255, ${pulse})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(launchX, launchY, launchW, launchH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px monospace';
+        ctx.fillText('LAUNCH', width / 2, launchY + launchH / 2 + 6);
+    }
+
     drawAircraftSelect(aircraft, selectedIdx, width, height) {
         const ctx = this.ctx;
         const t = this.time;
