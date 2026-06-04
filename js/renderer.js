@@ -909,6 +909,101 @@ export class Renderer {
         ctx.globalAlpha = 1;
     }
 
+    drawFriendlyJet(jet) {
+        const ctx = this.ctx;
+        const { x, y, angle } = jet;
+        const size = 22;
+        const t = this.time;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        // afterburner
+        const abLen = 10 + Math.sin(t * 45) * 3;
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.8, 0);
+        ctx.lineTo(-size * 0.8 - abLen, -2.5);
+        ctx.lineTo(-size * 0.8 - abLen * 1.2, 0);
+        ctx.lineTo(-size * 0.8 - abLen, 2.5);
+        ctx.closePath();
+        ctx.fillStyle = '#4488ff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.8, 0);
+        ctx.lineTo(-size * 0.8 - abLen * 0.5, -1.2);
+        ctx.lineTo(-size * 0.8 - abLen * 0.6, 0);
+        ctx.lineTo(-size * 0.8 - abLen * 0.5, 1.2);
+        ctx.closePath();
+        ctx.fillStyle = '#aaccff';
+        ctx.fill();
+
+        // fuselage
+        ctx.beginPath();
+        ctx.moveTo(size, 0);
+        ctx.quadraticCurveTo(size * 0.7, -size * 0.14, 0, -size * 0.17);
+        ctx.lineTo(-size * 0.65, -size * 0.13);
+        ctx.lineTo(-size * 0.8, -size * 0.08);
+        ctx.lineTo(-size * 0.8, size * 0.08);
+        ctx.lineTo(-size * 0.65, size * 0.13);
+        ctx.lineTo(0, size * 0.17);
+        ctx.quadraticCurveTo(size * 0.7, size * 0.14, size, 0);
+        ctx.closePath();
+
+        const bodyGrad = ctx.createLinearGradient(0, -size * 0.2, 0, size * 0.2);
+        bodyGrad.addColorStop(0, '#5577aa');
+        bodyGrad.addColorStop(0.3, '#334477');
+        bodyGrad.addColorStop(0.7, '#223355');
+        bodyGrad.addColorStop(1, '#112244');
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+
+        // cockpit
+        ctx.beginPath();
+        ctx.ellipse(size * 0.45, -size * 0.02, size * 0.14, size * 0.06, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#88bbdd';
+        ctx.fill();
+
+        // swept wings
+        ctx.beginPath();
+        ctx.moveTo(size * 0.1, -size * 0.16);
+        ctx.lineTo(-size * 0.1, -size * 0.85);
+        ctx.lineTo(-size * 0.3, -size * 0.8);
+        ctx.lineTo(-size * 0.15, -size * 0.14);
+        ctx.closePath();
+        ctx.fillStyle = '#2a4477';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(size * 0.1, size * 0.16);
+        ctx.lineTo(-size * 0.1, size * 0.85);
+        ctx.lineTo(-size * 0.3, size * 0.8);
+        ctx.lineTo(-size * 0.15, size * 0.14);
+        ctx.closePath();
+        ctx.fillStyle = '#2a4477';
+        ctx.fill();
+
+        // tail fin
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.55, -size * 0.12);
+        ctx.lineTo(-size * 0.65, -size * 0.45);
+        ctx.lineTo(-size * 0.8, -size * 0.4);
+        ctx.lineTo(-size * 0.72, -size * 0.1);
+        ctx.closePath();
+        ctx.fillStyle = '#3355aa';
+        ctx.fill();
+
+        // friendly markings (star on wing)
+        ctx.beginPath();
+        ctx.arc(-size * 0.1, -size * 0.5, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.6;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+    }
+
     drawTerrain(terrain) {
         const ctx = this.ctx;
         const points = terrain.points;

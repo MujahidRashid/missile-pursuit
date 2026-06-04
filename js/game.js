@@ -13,7 +13,7 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 25;
-const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, PLAYING: 3, WIN: 4, LOSE: 5 };
+const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, WIN: 5, LOSE: 6 };
 
 let state = STATE.MENU;
 let missile = null;
@@ -29,14 +29,14 @@ let explosionPos = { x: 0, y: 0 };
 let loseReason = '';
 let lastTime = 0;
 
+let friendlyJet = null;
+
 function resize() {
     canvas.width = window.innerWidth * window.devicePixelRatio;
     canvas.height = window.innerHeight * window.devicePixelRatio;
 }
 
 function startLevel() {
-    state = STATE.PLAYING;
-
     const w = canvas.width;
     const h = canvas.height;
     const ac = selectedAircraft;
@@ -52,9 +52,7 @@ function startLevel() {
         sams.push(s);
     }
 
-    missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
     plane = new Plane(w / 2, h * 0.2, w, h);
-
     plane.aircraftId = ac.id;
     plane.speed = ac.speed + level * 15;
     plane.evasionLevel = Math.min(ac.evasion, 3);
@@ -64,10 +62,44 @@ function startLevel() {
     plane.flareCount = ac.flareCount;
     plane.hitPoints = ac.hitPoints;
 
+    missile = null;
+    friendlyJet = {
+        x: -40,
+        y: h * 0.7,
+        angle: -0.3,
+        speed: 300,
+        fired: false,
+        phase: 'enter'
+    };
+
     explosionProgress = 0;
+    state = STATE.LAUNCH_INTRO;
 }
 
 function update(dt) {
+    if (state === STATE.LAUNCH_INTRO) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const jet = friendlyJet;
+
+        jet.x += Math.cos(jet.angle) * jet.speed * dt;
+        jet.y += Math.sin(jet.angle) * jet.speed * dt;
+
+        if (jet.phase === 'enter' && jet.x >= w * 0.45) {
+            jet.fired = true;
+            jet.phase = 'exit';
+            jet.angle = -0.5;
+            jet.speed = 350;
+            missile = new Missile(jet.x, jet.y);
+            missile.angle = jet.angle + 0.2;
+        }
+
+        if (jet.phase === 'exit' && (jet.x > w + 60 || jet.y < -60)) {
+            state = STATE.PLAYING;
+            friendlyJet = null;
+        }
+    }
+
     if (state === STATE.PLAYING) {
         if (input.active) {
             missile.setTarget(input.x, input.y);
@@ -154,6 +186,15 @@ function draw() {
 
     if (state === STATE.SETTINGS) {
         renderer.drawSettings(samCount, canvas.width, canvas.height);
+        return;
+    }
+
+    if (state === STATE.LAUNCH_INTRO) {
+        if (terrain) renderer.drawTerrain(terrain);
+        for (const s of sams) renderer.drawSAM(s);
+        if (plane) renderer.drawPlane(plane);
+        if (friendlyJet) renderer.drawFriendlyJet(friendlyJet);
+        if (missile) renderer.drawMissile(missile);
         return;
     }
 
