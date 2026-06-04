@@ -1,0 +1,22 @@
+{
+  "name": "missile",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf www && mkdir -p www && cp index.html www/ && cp -r css www/ && cp -r js www/ && cp -r assets www/",
+    "sync": "npm run build && npx cap sync android"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/splash-screen": "^8.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
