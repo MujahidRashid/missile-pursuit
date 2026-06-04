@@ -52,6 +52,7 @@ function startLevel() {
         const yPos = terrain.getGroundY(xPos);
         const s = new SAMSite(xPos, yPos);
         s.fireTimer = 1.5 + i * 0.8;
+        s.realistic = (gameMode === 'realistic');
         sams.push(s);
     }
 

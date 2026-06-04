@@ -1,4 +1,4 @@
-import { angle } from './utils.js';
+import { angle, normalizeAngle } from './utils.js';
 
 export class SAMSite {
     constructor(x, y) {
@@ -9,6 +9,7 @@ export class SAMSite {
         this.rockets = [];
         this.rocketSpeed = 280;
         this.rocketLife = 4.0;
+        this.realistic = false;
     }
 
     update(dt, missile) {
@@ -21,6 +22,18 @@ export class SAMSite {
 
         for (let i = this.rockets.length - 1; i >= 0; i--) {
             const r = this.rockets[i];
+
+            if (this.realistic && missile && missile.alive && r.turnEnergy > 0) {
+                const targetAngle = angle(r, missile);
+                const diff = normalizeAngle(targetAngle - r.angle);
+                const turnSpeed = 2.5;
+                const maxTurn = turnSpeed * dt;
+                const actualTurn = Math.sign(diff) * Math.min(Math.abs(diff), maxTurn);
+                r.angle += actualTurn;
+                r.turnEnergy -= Math.abs(actualTurn);
+                if (r.turnEnergy <= 0) r.turnEnergy = 0;
+            }
+
             r.x += Math.cos(r.angle) * this.rocketSpeed * dt;
             r.y += Math.sin(r.angle) * this.rocketSpeed * dt;
             r.life -= dt;
@@ -41,7 +54,8 @@ export class SAMSite {
             y: this.y,
             angle: a,
             life: this.rocketLife,
-            trail: []
+            trail: [],
+            turnEnergy: this.realistic ? 1.2 : 0
         });
     }
 }
