@@ -74,7 +74,7 @@ function startLevel() {
         x: -160,
         y: introHeight,
         angle: 0,
-        speed: 280,
+        speed: 250,
         fired: false,
         phase: 'chase'
     };
