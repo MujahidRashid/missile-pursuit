@@ -52,25 +52,31 @@ function startLevel() {
         sams.push(s);
     }
 
-    plane = new Plane(w / 2, h * 0.2, w, h);
+    const groundTop = terrain.getGroundY(w / 2) - 80;
+    const introHeight = h * 0.15 + Math.random() * (groundTop - h * 0.15 - 40);
+
+    plane = new Plane(-60, introHeight, w, h);
     plane.terrain = terrain;
     plane.aircraftId = ac.id;
     plane.speed = ac.speed + level * 15;
-    plane.evasionLevel = Math.min(ac.evasion, 3);
+    plane.evasionLevel = 0;
     plane.turnSpeed = ac.turnSpeed;
     plane.flareCooldownTime = ac.flareCooldown;
     plane.flareDeployDist = ac.flareDeployDist;
     plane.flareCount = ac.flareCount;
     plane.hitPoints = ac.hitPoints;
+    plane.angle = 0;
+    plane.targetAngle = 0;
+    plane.introMode = true;
 
     missile = null;
     friendlyJet = {
-        x: -40,
-        y: h * 0.7,
-        angle: -0.3,
-        speed: 300,
+        x: -160,
+        y: introHeight,
+        angle: 0,
+        speed: 280,
         fired: false,
-        phase: 'enter'
+        phase: 'chase'
     };
 
     explosionProgress = 0;
@@ -80,24 +86,32 @@ function startLevel() {
 function update(dt) {
     if (state === STATE.LAUNCH_INTRO) {
         const w = canvas.width;
-        const h = canvas.height;
         const jet = friendlyJet;
+
+        // move target plane forward in intro (straight line)
+        if (plane.introMode) {
+            plane.x += 250 * dt;
+            plane.angle = 0;
+            plane.targetAngle = 0;
+        }
 
         jet.x += Math.cos(jet.angle) * jet.speed * dt;
         jet.y += Math.sin(jet.angle) * jet.speed * dt;
 
-        if (jet.phase === 'enter' && jet.x >= w * 0.45) {
+        if (jet.phase === 'chase' && plane.x >= w * 0.5) {
             jet.fired = true;
             jet.phase = 'exit';
-            jet.angle = -0.5;
+            jet.angle = -0.6;
             jet.speed = 350;
-            missile = new Missile(jet.x, jet.y);
-            missile.angle = jet.angle + 0.2;
+            missile = new Missile(jet.x + 20, jet.y);
+            missile.angle = 0;
         }
 
-        if (jet.phase === 'exit' && (jet.x > w + 60 || jet.y < -60)) {
+        if (jet.phase === 'exit' && (jet.x > w + 80 || jet.y < -80)) {
             state = STATE.PLAYING;
             friendlyJet = null;
+            plane.introMode = false;
+            plane.evasionLevel = Math.min(selectedAircraft.evasion, 3);
         }
     }
 

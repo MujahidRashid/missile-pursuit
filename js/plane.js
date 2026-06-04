@@ -27,6 +27,8 @@ export class Plane {
     }
 
     update(dt, missile) {
+        if (this.introMode) return;
+
         this.dirChangeTimer += dt;
         this.flareCooldown -= dt;
 
