@@ -125,7 +125,7 @@ function update(dt) {
     }
 
 
-    if (state === STATE.PLAYING) {
+    if (state === STATE.PLAYING && missile && missile.alive) {
         if (input.active) {
             missile.setTarget(input.x, input.y);
         }
@@ -136,21 +136,23 @@ function update(dt) {
 
         targetVisible = (gameMode === 'easy') || missile.isInCone(plane, plane.radarSignature || 400);
 
-        const SAM_HIT_DIST = 16;
-        let samHit = false;
-        for (const s of sams) {
-            for (const rocket of s.rockets) {
-                if (distance(missile, rocket) < SAM_HIT_DIST) {
-                    state = STATE.LOSE;
-                    loseReason = 'SHOT DOWN BY SAM';
-                    explosionPos = { x: missile.x, y: missile.y };
-                    explosionProgress = 0;
-                    missile.alive = false;
-                    samHit = true;
-                    break;
+        if (missile.graceTimer <= 0) {
+            const SAM_HIT_DIST = 16;
+            let samHit = false;
+            for (const s of sams) {
+                for (const rocket of s.rockets) {
+                    if (distance(missile, rocket) < SAM_HIT_DIST) {
+                        state = STATE.LOSE;
+                        loseReason = 'SHOT DOWN BY SAM';
+                        explosionPos = { x: missile.x, y: missile.y };
+                        explosionProgress = 0;
+                        missile.alive = false;
+                        samHit = true;
+                        break;
+                    }
                 }
+                if (samHit) break;
             }
-            if (samHit) break;
         }
 
         if (missile.graceTimer > 0) {
@@ -163,14 +165,14 @@ function update(dt) {
                 explosionProgress = 0;
             } else {
                 plane.speed += 20;
-                explosionPos = { x: plane.x, y: plane.y };
-                explosionProgress = 0;
                 const w = canvas.width;
-                missile = new Missile(w * 0.1, canvas.height * 0.7, 0);
-                missile.graceTimer = 0.8;
+                const groundY = terrain.getGroundY(w * 0.1);
+                const spawnY = Math.min(canvas.height * 0.7, groundY - 50);
+                missile = new Missile(w * 0.1, spawnY, 0);
+                missile.graceTimer = 1.0;
                 friendlyJet = {
                     x: w * 0.1 - 30,
-                    y: canvas.height * 0.7,
+                    y: spawnY,
                     angle: -0.6,
                     speed: 400,
                     fired: true,
@@ -179,24 +181,26 @@ function update(dt) {
             }
         }
 
-        const FLARE_HIT_DIST = 18;
-        for (const flare of plane.flares) {
-            if (distance(missile, flare) < FLARE_HIT_DIST) {
+        if (missile.graceTimer <= 0) {
+            const FLARE_HIT_DIST = 18;
+            for (const flare of plane.flares) {
+                if (distance(missile, flare) < FLARE_HIT_DIST) {
+                    state = STATE.LOSE;
+                    loseReason = 'HIT BY FLARE';
+                    explosionPos = { x: missile.x, y: missile.y };
+                    explosionProgress = 0;
+                    missile.alive = false;
+                    break;
+                }
+            }
+
+            if (missile.alive && missile.y >= terrain.getGroundY(missile.x)) {
                 state = STATE.LOSE;
-                loseReason = 'HIT BY FLARE';
+                loseReason = 'CRASHED';
                 explosionPos = { x: missile.x, y: missile.y };
                 explosionProgress = 0;
                 missile.alive = false;
-                break;
             }
-        }
-
-        if (missile.alive && missile.y >= terrain.getGroundY(missile.x)) {
-            state = STATE.LOSE;
-            loseReason = 'CRASHED';
-            explosionPos = { x: missile.x, y: missile.y };
-            explosionProgress = 0;
-            missile.alive = false;
         }
 
         if (!missile.alive && state === STATE.PLAYING) {
