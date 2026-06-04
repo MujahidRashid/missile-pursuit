@@ -24,6 +24,8 @@ let level = 1;
 let selectedAircraft = null;
 let selectIndex = 0;
 let samCount = 1;
+let gameMode = 'easy';
+let targetVisible = true;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
 let loseReason = '';
@@ -149,6 +151,8 @@ function update(dt) {
         plane.update(dt, missile);
         for (const s of sams) s.update(dt, missile);
 
+        targetVisible = (gameMode === 'easy') || missile.isInCone(plane);
+
         const SAM_HIT_DIST = 16;
         let samHit = false;
         for (const s of sams) {
@@ -233,7 +237,7 @@ function draw() {
     }
 
     if (state === STATE.SETTINGS) {
-        renderer.drawSettings(samCount, canvas.width, canvas.height);
+        renderer.drawSettings(samCount, gameMode, canvas.width, canvas.height);
         return;
     }
 
@@ -249,7 +253,12 @@ function draw() {
     if (terrain) renderer.drawTerrain(terrain);
 
     if (friendlyJet) renderer.drawFriendlyJet(friendlyJet);
-    if (plane) renderer.drawPlane(plane);
+
+    if (gameMode === 'realistic' && missile && missile.alive) {
+        renderer.drawRadarCone(missile);
+    }
+
+    if (plane && (targetVisible || state !== STATE.PLAYING)) renderer.drawPlane(plane);
     if (missile) renderer.drawMissile(missile);
 
     if (missile) {
@@ -262,6 +271,10 @@ function draw() {
         renderer.drawCrosshair(input.x, input.y);
     }
 
+    if (plane && targetVisible && plane.flares.length > 0) {
+        renderer.drawFlares(plane.flares);
+    }
+
     if (state === STATE.WIN) {
         renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
         if (explosionProgress >= 1) {
@@ -270,12 +283,12 @@ function draw() {
         }
     }
 
-    if (plane && plane.flares.length > 0) {
-        renderer.drawFlares(plane.flares);
-    }
-
     for (const s of sams) {
         renderer.drawSAM(s);
+    }
+
+    if (gameMode === 'realistic' && missile && missile.alive && state === STATE.PLAYING) {
+        renderer.drawDatalink(missile, plane, sams, canvas.width, canvas.height);
     }
 
     if (state === STATE.LOSE) {
@@ -337,13 +350,21 @@ function getSettingsButtons() {
     const w = canvas.width;
     const h = canvas.height;
     const btnSize = Math.min(w * 0.12, 50);
-    const centerY = h * 0.45;
+    const samY = h * 0.42;
     const launchW = w * 0.4;
     const launchH = h * 0.07;
+    const modeBtnW = w * 0.3;
+    const modeBtnH = h * 0.055;
+    const modeY = h * 0.22;
+    const modeGap = w * 0.04;
+    const modeTotalW = modeBtnW * 2 + modeGap;
+    const modeStartX = (w - modeTotalW) / 2;
     return {
-        minus: { x: w * 0.25 - btnSize / 2, y: centerY - btnSize / 2, w: btnSize, h: btnSize },
-        plus: { x: w * 0.75 - btnSize / 2, y: centerY - btnSize / 2, w: btnSize, h: btnSize },
-        launch: { x: (w - launchW) / 2, y: h * 0.65, w: launchW, h: launchH }
+        modeEasy: { x: modeStartX, y: modeY, w: modeBtnW, h: modeBtnH },
+        modeRealistic: { x: modeStartX + modeBtnW + modeGap, y: modeY, w: modeBtnW, h: modeBtnH },
+        minus: { x: w * 0.25 - btnSize / 2, y: samY - btnSize / 2, w: btnSize, h: btnSize },
+        plus: { x: w * 0.75 - btnSize / 2, y: samY - btnSize / 2, w: btnSize, h: btnSize },
+        launch: { x: (w - launchW) / 2, y: h * 0.72, w: launchW, h: launchH }
     };
 }
 
@@ -367,7 +388,11 @@ function handleTap() {
         const btns = getSettingsButtons();
         const tx = input.x;
         const ty = input.y;
-        if (hitButton(btns.minus, tx, ty)) {
+        if (hitButton(btns.modeEasy, tx, ty)) {
+            gameMode = 'easy';
+        } else if (hitButton(btns.modeRealistic, tx, ty)) {
+            gameMode = 'realistic';
+        } else if (hitButton(btns.minus, tx, ty)) {
             samCount = Math.max(1, samCount - 1);
         } else if (hitButton(btns.plus, tx, ty)) {
             samCount = Math.min(5, samCount + 1);

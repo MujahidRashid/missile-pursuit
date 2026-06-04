@@ -14,6 +14,13 @@ export class Missile {
         this.alive = true;
         this.targetAngle = this.angle;
         this.turnSpeed = 3.5; // radians per second
+        this.coneHalfAngle = Math.PI / 4; // 45 degrees each side = 90 degree cone
+    }
+
+    isInCone(target) {
+        const angleToTarget = Math.atan2(target.y - this.y, target.x - this.x);
+        const diff = Math.abs(normalizeAngle(angleToTarget - this.angle));
+        return diff <= this.coneHalfAngle;
     }
 
     setTarget(targetX, targetY) {

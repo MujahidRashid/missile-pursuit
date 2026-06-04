@@ -533,7 +533,7 @@ export class Renderer {
         ctx.restore();
     }
 
-    drawSettings(samCount, width, height) {
+    drawSettings(samCount, gameMode, width, height) {
         const ctx = this.ctx;
         const t = this.time;
 
@@ -541,16 +541,58 @@ export class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 24px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('MISSION SETTINGS', width / 2, height * 0.15);
+        ctx.fillText('MISSION SETTINGS', width / 2, height * 0.1);
+
+        // mode selection
+        ctx.fillStyle = '#8899aa';
+        ctx.font = '12px monospace';
+        ctx.fillText('MODE', width / 2, height * 0.17);
+
+        const modeBtnW = width * 0.3;
+        const modeBtnH = height * 0.055;
+        const modeY = height * 0.22;
+        const modeGap = width * 0.04;
+        const modeTotalW = modeBtnW * 2 + modeGap;
+        const modeStartX = (width - modeTotalW) / 2;
+
+        // easy button
+        ctx.fillStyle = gameMode === 'easy' ? '#1a4433' : '#1a1a33';
+        ctx.fillRect(modeStartX, modeY, modeBtnW, modeBtnH);
+        ctx.strokeStyle = gameMode === 'easy' ? '#44cc88' : '#444466';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(modeStartX, modeY, modeBtnW, modeBtnH);
+        ctx.fillStyle = gameMode === 'easy' ? '#44ff88' : '#888888';
+        ctx.font = 'bold 13px monospace';
+        ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
+
+        // realistic button
+        const realX = modeStartX + modeBtnW + modeGap;
+        ctx.fillStyle = gameMode === 'realistic' ? '#1a2244' : '#1a1a33';
+        ctx.fillRect(realX, modeY, modeBtnW, modeBtnH);
+        ctx.strokeStyle = gameMode === 'realistic' ? '#4488ff' : '#444466';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(realX, modeY, modeBtnW, modeBtnH);
+        ctx.fillStyle = gameMode === 'realistic' ? '#66aaff' : '#888888';
+        ctx.font = 'bold 13px monospace';
+        ctx.fillText('REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
+
+        // mode description
+        ctx.fillStyle = '#556677';
+        ctx.font = '10px monospace';
+        if (gameMode === 'easy') {
+            ctx.fillText('Full visibility - see everything', width / 2, modeY + modeBtnH + 14);
+        } else {
+            ctx.fillText('Radar cone + datalink only', width / 2, modeY + modeBtnH + 14);
+        }
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
-        ctx.font = '14px monospace';
-        ctx.fillText('SAM SITES', width / 2, height * 0.32);
+        ctx.font = '12px monospace';
+        ctx.fillText('SAM SITES', width / 2, height * 0.37);
 
         // minus button
         const btnSize = Math.min(width * 0.12, 50);
-        const centerY = height * 0.45;
+        const centerY = height * 0.42;
 
         ctx.fillStyle = '#1a2233';
         ctx.fillRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
@@ -599,7 +641,7 @@ export class Renderer {
         const launchW = width * 0.4;
         const launchH = height * 0.07;
         const launchX = (width - launchW) / 2;
-        const launchY = height * 0.65;
+        const launchY = height * 0.72;
 
         const pulse = 0.8 + Math.sin(t * 3) * 0.2;
         ctx.fillStyle = '#1a3355';
@@ -1254,5 +1296,161 @@ export class Renderer {
             ctx.fillStyle = `rgba(255, 200, 50, ${alpha * 0.8})`;
             ctx.fill();
         }
+    }
+
+    drawRadarCone(missile) {
+        const ctx = this.ctx;
+        const { x, y, angle, coneHalfAngle } = missile;
+        const coneRange = 800;
+
+        ctx.save();
+
+        // draw cone area
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.arc(x, y, coneRange, angle - coneHalfAngle, angle + coneHalfAngle);
+        ctx.closePath();
+
+        const coneGrad = ctx.createRadialGradient(x, y, 0, x, y, coneRange);
+        coneGrad.addColorStop(0, 'rgba(0, 229, 255, 0.12)');
+        coneGrad.addColorStop(0.7, 'rgba(0, 229, 255, 0.04)');
+        coneGrad.addColorStop(1, 'rgba(0, 229, 255, 0)');
+        ctx.fillStyle = coneGrad;
+        ctx.fill();
+
+        // cone edge lines
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(angle - coneHalfAngle) * coneRange, y + Math.sin(angle - coneHalfAngle) * coneRange);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + Math.cos(angle + coneHalfAngle) * coneRange, y + Math.sin(angle + coneHalfAngle) * coneRange);
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawDatalink(missile, plane, sams, canvasWidth, canvasHeight) {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        const radius = Math.min(canvasWidth, canvasHeight) * 0.12;
+        const cx = canvasWidth - radius - 15;
+        const cy = canvasHeight - radius - 15;
+        const range = 600;
+
+        // background circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 10, 20, 0.85)';
+        ctx.fill();
+        ctx.strokeStyle = '#225533';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // range rings
+        ctx.strokeStyle = 'rgba(34, 85, 51, 0.4)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.25, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // crosshairs
+        ctx.beginPath();
+        ctx.moveTo(cx - radius, cy);
+        ctx.lineTo(cx + radius, cy);
+        ctx.moveTo(cx, cy - radius);
+        ctx.lineTo(cx, cy + radius);
+        ctx.strokeStyle = 'rgba(34, 85, 51, 0.3)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // rotating sweep line
+        const sweepAngle = t * 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
+        ctx.strokeStyle = 'rgba(50, 255, 100, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // sweep fade trail
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, sweepAngle - 0.5, sweepAngle);
+        ctx.closePath();
+        const sweepGrad = ctx.createConicGradient(sweepAngle - 0.5, cx, cy);
+        sweepGrad.addColorStop(0, 'rgba(50, 255, 100, 0)');
+        sweepGrad.addColorStop(1, 'rgba(50, 255, 100, 0.15)');
+        ctx.fillStyle = sweepGrad;
+        ctx.fill();
+
+        // missile heading indicator (small line from center)
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(missile.angle) * radius * 0.2, cy + Math.sin(missile.angle) * radius * 0.2);
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // missile cone arc on radar
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.22, missile.angle - missile.coneHalfAngle, missile.angle + missile.coneHalfAngle);
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // center dot (missile)
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#00e5ff';
+        ctx.fill();
+
+        // target blip
+        if (plane) {
+            const dx = plane.x - missile.x;
+            const dy = plane.y - missile.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const scale = Math.min(dist / range, 0.9) * radius;
+            const blipAngle = Math.atan2(dy, dx);
+            const bx = cx + Math.cos(blipAngle) * scale;
+            const by = cy + Math.sin(blipAngle) * scale;
+
+            const blipPulse = 0.6 + Math.sin(t * 6) * 0.4;
+            ctx.beginPath();
+            ctx.arc(bx, by, 4, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 60, 60, ${blipPulse})`;
+            ctx.fill();
+
+            // blip label
+            ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
+            ctx.font = '8px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('TGT', bx, by - 7);
+        }
+
+        // SAM site blips
+        for (const s of sams) {
+            const dx = s.x - missile.x;
+            const dy = s.y - missile.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const scale = Math.min(dist / range, 0.9) * radius;
+            const blipAngle = Math.atan2(dy, dx);
+            const sx = cx + Math.cos(blipAngle) * scale;
+            const sy = cy + Math.sin(blipAngle) * scale;
+
+            ctx.fillStyle = 'rgba(255, 180, 0, 0.7)';
+            ctx.fillRect(sx - 2, sy - 2, 4, 4);
+        }
+
+        // border label
+        ctx.fillStyle = '#336644';
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('DATALINK', cx, cy - radius - 5);
     }
 }
