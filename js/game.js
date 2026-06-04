@@ -5,6 +5,7 @@ import { Terrain } from './terrain.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { distance } from './utils.js';
+import { AIRCRAFT } from './aircraft.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -12,7 +13,7 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 25;
-const STATE = { MENU: 0, PLAYING: 1, WIN: 2, LOSE: 3 };
+const STATE = { MENU: 0, SELECT: 1, PLAYING: 2, WIN: 3, LOSE: 4 };
 
 let state = STATE.MENU;
 let missile = null;
@@ -20,6 +21,8 @@ let plane = null;
 let sam = null;
 let terrain = null;
 let level = 1;
+let selectedAircraft = null;
+let selectIndex = 0;
 let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
 let loseReason = '';
@@ -35,6 +38,7 @@ function startLevel() {
 
     const w = canvas.width;
     const h = canvas.height;
+    const ac = selectedAircraft;
 
     terrain = new Terrain(w, h);
 
@@ -45,8 +49,14 @@ function startLevel() {
     missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
     plane = new Plane(w / 2, h * 0.2, w, h);
 
-    plane.evasionLevel = Math.min(level, 3);
-    plane.speed = 130 + level * 20;
+    plane.aircraftId = ac.id;
+    plane.speed = ac.speed + level * 15;
+    plane.evasionLevel = Math.min(ac.evasion, 3);
+    plane.turnSpeed = ac.turnSpeed;
+    plane.flareCooldownTime = ac.flareCooldown;
+    plane.flareDeployDist = ac.flareDeployDist;
+    plane.flareCount = ac.flareCount;
+    plane.hitPoints = ac.hitPoints;
 
     explosionProgress = 0;
 }
@@ -74,9 +84,17 @@ function update(dt) {
         }
 
         if (distance(missile, plane) < HIT_DISTANCE) {
-            state = STATE.WIN;
-            explosionPos = { x: plane.x, y: plane.y };
-            explosionProgress = 0;
+            plane.hitPoints--;
+            if (plane.hitPoints <= 0) {
+                state = STATE.WIN;
+                explosionPos = { x: plane.x, y: plane.y };
+                explosionProgress = 0;
+            } else {
+                // hit but not destroyed — reset missile from ground
+                const w = canvas.width;
+                missile = new Missile(w / 2, terrain.getGroundY(w / 2) - 30);
+                plane.speed += 20;
+            }
         }
 
         const FLARE_HIT_DIST = 18;
@@ -114,7 +132,12 @@ function draw() {
     renderer.clear(canvas.width, canvas.height);
 
     if (state === STATE.MENU) {
-        renderer.drawMessage('MISSILE PURSUIT', 'Tap to launch', canvas.width, canvas.height);
+        renderer.drawMessage('MISSILE PURSUIT', 'Tap to start', canvas.width, canvas.height);
+        return;
+    }
+
+    if (state === STATE.SELECT) {
+        renderer.drawAircraftSelect(AIRCRAFT, selectIndex, canvas.width, canvas.height);
         return;
     }
 
@@ -167,9 +190,38 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
+function getSelectBoxes() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const boxW = w * 0.7;
+    const boxH = h * 0.12;
+    const startY = h * 0.25;
+    const gap = boxH + h * 0.03;
+    return AIRCRAFT.map((ac, i) => ({
+        x: (w - boxW) / 2,
+        y: startY + i * gap,
+        w: boxW,
+        h: boxH,
+        index: i
+    }));
+}
+
 function handleTap() {
     if (state === STATE.MENU) {
-        startLevel();
+        state = STATE.SELECT;
+    } else if (state === STATE.SELECT) {
+        const boxes = getSelectBoxes();
+        const tx = input.x;
+        const ty = input.y;
+        for (const box of boxes) {
+            if (tx >= box.x && tx <= box.x + box.w && ty >= box.y && ty <= box.y + box.h) {
+                selectIndex = box.index;
+                selectedAircraft = AIRCRAFT[selectIndex];
+                level = 1;
+                startLevel();
+                return;
+            }
+        }
     } else if (state === STATE.WIN && explosionProgress >= 1) {
         level++;
         startLevel();

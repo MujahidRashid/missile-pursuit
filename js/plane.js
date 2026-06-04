@@ -20,6 +20,9 @@ export class Plane {
         this.flareCooldown = 0;
         this.flareCooldownTime = 2.5;
         this.flareDeployDist = 180;
+        this.flareCount = 3;
+        this.hitPoints = 1;
+        this.aircraftId = 'f16';
     }
 
     update(dt, missile) {
@@ -69,7 +72,7 @@ export class Plane {
     }
 
     deployFlares() {
-        const count = 3 + Math.floor(Math.random() * 2);
+        const count = this.flareCount || (3 + Math.floor(Math.random() * 2));
         for (let i = 0; i < count; i++) {
             const spread = (i / (count - 1) - 0.5) * Math.PI;
             this.flares.push({

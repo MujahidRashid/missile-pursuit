@@ -126,6 +126,14 @@ export class Renderer {
     }
 
     drawPlane(plane) {
+        const id = plane.aircraftId || 'f16';
+        if (id === 'a10') { this.drawA10(plane); return; }
+        if (id === 'b2') { this.drawB2(plane); return; }
+        if (id === 'f22') { this.drawF22(plane); return; }
+        this.drawF16(plane);
+    }
+
+    drawF16(plane) {
         const ctx = this.ctx;
         const { x, y, angle } = plane;
         const size = 20;
@@ -247,6 +255,455 @@ export class Renderer {
         ctx.arc(-size * 0.2, size * 0.85, 1.5, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(50, 255, 50, ${0.6 + Math.sin(t * 4) * 0.4})`;
         ctx.fill();
+
+        ctx.restore();
+    }
+
+    drawA10(plane) {
+        const ctx = this.ctx;
+        const { x, y, angle } = plane;
+        const size = 22;
+        const t = this.time;
+
+        this.drawTrail(plane.trail, '#556b2f', 0.3);
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        // twin engines exhaust
+        const exLen = 5 + Math.sin(t * 30) * 1.5;
+        ctx.fillStyle = '#888888';
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.7, -size * 0.25);
+        ctx.lineTo(-size * 0.7 - exLen, -size * 0.25);
+        ctx.lineTo(-size * 0.7 - exLen * 0.5, -size * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.7, size * 0.25);
+        ctx.lineTo(-size * 0.7 - exLen, size * 0.25);
+        ctx.lineTo(-size * 0.7 - exLen * 0.5, size * 0.22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // thick fuselage
+        ctx.beginPath();
+        ctx.moveTo(size * 0.9, 0);
+        ctx.quadraticCurveTo(size * 0.7, -size * 0.12, 0, -size * 0.15);
+        ctx.lineTo(-size * 0.8, -size * 0.12);
+        ctx.lineTo(-size * 0.8, size * 0.12);
+        ctx.lineTo(0, size * 0.15);
+        ctx.quadraticCurveTo(size * 0.7, size * 0.12, size * 0.9, 0);
+        ctx.closePath();
+        const bodyGrad = ctx.createLinearGradient(0, -size * 0.15, 0, size * 0.15);
+        bodyGrad.addColorStop(0, '#6b8e23');
+        bodyGrad.addColorStop(0.5, '#556b2f');
+        bodyGrad.addColorStop(1, '#3a4a1f');
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+
+        // nose (gatling gun)
+        ctx.beginPath();
+        ctx.moveTo(size * 0.9, 0);
+        ctx.lineTo(size * 1.1, -size * 0.03);
+        ctx.lineTo(size * 1.1, size * 0.03);
+        ctx.closePath();
+        ctx.fillStyle = '#444444';
+        ctx.fill();
+
+        // cockpit
+        ctx.beginPath();
+        ctx.ellipse(size * 0.5, -size * 0.04, size * 0.15, size * 0.07, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#5588aa';
+        ctx.fill();
+
+        // straight wings (wide)
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.14);
+        ctx.lineTo(size * 0.1, -size * 1.1);
+        ctx.lineTo(-size * 0.15, -size * 1.1);
+        ctx.lineTo(-size * 0.2, -size * 0.13);
+        ctx.closePath();
+        ctx.fillStyle = '#4a6b1f';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, size * 0.14);
+        ctx.lineTo(size * 0.1, size * 1.1);
+        ctx.lineTo(-size * 0.15, size * 1.1);
+        ctx.lineTo(-size * 0.2, size * 0.13);
+        ctx.closePath();
+        ctx.fillStyle = '#4a6b1f';
+        ctx.fill();
+
+        // twin engines (pods on fuselage sides)
+        ctx.fillStyle = '#3a4a2f';
+        ctx.beginPath();
+        ctx.ellipse(-size * 0.4, -size * 0.25, size * 0.2, size * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(-size * 0.4, size * 0.25, size * 0.2, size * 0.08, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // twin tail fins
+        ctx.fillStyle = '#5a7a2f';
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.6, -size * 0.25);
+        ctx.lineTo(-size * 0.7, -size * 0.55);
+        ctx.lineTo(-size * 0.82, -size * 0.5);
+        ctx.lineTo(-size * 0.75, -size * 0.24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.6, size * 0.25);
+        ctx.lineTo(-size * 0.7, size * 0.55);
+        ctx.lineTo(-size * 0.82, size * 0.5);
+        ctx.lineTo(-size * 0.75, size * 0.24);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    drawB2(plane) {
+        const ctx = this.ctx;
+        const { x, y, angle } = plane;
+        const size = 24;
+        const t = this.time;
+
+        this.drawTrail(plane.trail, '#333355', 0.2);
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        // flying wing shape
+        ctx.beginPath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.quadraticCurveTo(size * 0.3, -size * 0.15, -size * 0.1, -size * 0.2);
+        ctx.lineTo(-size * 0.6, -size * 1.0);
+        ctx.lineTo(-size * 0.8, -size * 0.9);
+        ctx.lineTo(-size * 0.5, -size * 0.15);
+        ctx.lineTo(-size * 0.7, 0);
+        ctx.lineTo(-size * 0.5, size * 0.15);
+        ctx.lineTo(-size * 0.8, size * 0.9);
+        ctx.lineTo(-size * 0.6, size * 1.0);
+        ctx.lineTo(-size * 0.1, size * 0.2);
+        ctx.quadraticCurveTo(size * 0.3, size * 0.15, size * 0.8, 0);
+        ctx.closePath();
+
+        const b2Grad = ctx.createLinearGradient(0, -size * 0.3, 0, size * 0.3);
+        b2Grad.addColorStop(0, '#3a3a5a');
+        b2Grad.addColorStop(0.5, '#2a2a44');
+        b2Grad.addColorStop(1, '#1a1a33');
+        ctx.fillStyle = b2Grad;
+        ctx.fill();
+        ctx.strokeStyle = '#4a4a6a';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // cockpit window
+        ctx.beginPath();
+        ctx.ellipse(size * 0.3, 0, size * 0.12, size * 0.06, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#445577';
+        ctx.fill();
+
+        // stealth edges highlight
+        ctx.strokeStyle = `rgba(100, 100, 180, ${0.3 + Math.sin(t * 2) * 0.1})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.lineTo(-size * 0.6, -size * 1.0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * 0.8, 0);
+        ctx.lineTo(-size * 0.6, size * 1.0);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    drawF22(plane) {
+        const ctx = this.ctx;
+        const { x, y, angle } = plane;
+        const size = 20;
+        const t = this.time;
+
+        this.drawTrail(plane.trail, '#8888cc', 0.4);
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+
+        // twin engine afterburner
+        const abLen = 8 + Math.sin(t * 40) * 3;
+        ctx.fillStyle = '#6644ff';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.8, -size * 0.12);
+        ctx.lineTo(-size * 0.8 - abLen, -size * 0.12);
+        ctx.lineTo(-size * 0.8 - abLen * 0.7, -size * 0.08);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(-size * 0.8, size * 0.12);
+        ctx.lineTo(-size * 0.8 - abLen, size * 0.12);
+        ctx.lineTo(-size * 0.8 - abLen * 0.7, size * 0.08);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // fuselage
+        ctx.beginPath();
+        ctx.moveTo(size, 0);
+        ctx.quadraticCurveTo(size * 0.6, -size * 0.18, 0, -size * 0.2);
+        ctx.lineTo(-size * 0.6, -size * 0.18);
+        ctx.lineTo(-size * 0.8, -size * 0.14);
+        ctx.lineTo(-size * 0.8, size * 0.14);
+        ctx.lineTo(-size * 0.6, size * 0.18);
+        ctx.lineTo(0, size * 0.2);
+        ctx.quadraticCurveTo(size * 0.6, size * 0.18, size, 0);
+        ctx.closePath();
+
+        const f22Grad = ctx.createLinearGradient(0, -size * 0.2, 0, size * 0.2);
+        f22Grad.addColorStop(0, '#8899bb');
+        f22Grad.addColorStop(0.3, '#667799');
+        f22Grad.addColorStop(0.7, '#445577');
+        f22Grad.addColorStop(1, '#334466');
+        ctx.fillStyle = f22Grad;
+        ctx.fill();
+
+        // cockpit
+        ctx.beginPath();
+        ctx.ellipse(size * 0.4, -size * 0.02, size * 0.16, size * 0.07, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#66aadd';
+        ctx.fill();
+        ctx.strokeStyle = '#88ccff';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // delta wings
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, -size * 0.19);
+        ctx.lineTo(-size * 0.3, -size * 0.95);
+        ctx.lineTo(-size * 0.55, -size * 0.85);
+        ctx.lineTo(-size * 0.3, -size * 0.17);
+        ctx.closePath();
+        const wGrad = ctx.createLinearGradient(0, -size * 0.19, 0, -size * 0.95);
+        wGrad.addColorStop(0, '#556688');
+        wGrad.addColorStop(1, '#445577');
+        ctx.fillStyle = wGrad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(size * 0.2, size * 0.19);
+        ctx.lineTo(-size * 0.3, size * 0.95);
+        ctx.lineTo(-size * 0.55, size * 0.85);
+        ctx.lineTo(-size * 0.3, size * 0.17);
+        ctx.closePath();
+        ctx.fillStyle = wGrad;
+        ctx.fill();
+
+        // twin canted tail fins
+        ctx.fillStyle = '#556688';
+        ctx.save();
+        ctx.translate(-size * 0.6, -size * 0.15);
+        ctx.rotate(-0.3);
+        ctx.fillRect(-size * 0.1, -size * 0.35, size * 0.08, size * 0.35);
+        ctx.restore();
+        ctx.save();
+        ctx.translate(-size * 0.6, size * 0.15);
+        ctx.rotate(0.3);
+        ctx.fillRect(-size * 0.1, 0, size * 0.08, size * 0.35);
+        ctx.restore();
+
+        // nav lights
+        ctx.beginPath();
+        ctx.arc(-size * 0.35, -size * 0.9, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 50, 50, ${0.6 + Math.sin(t * 5) * 0.4})`;
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(-size * 0.35, size * 0.9, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(50, 255, 50, ${0.6 + Math.sin(t * 5) * 0.4})`;
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    drawAircraftSelect(aircraft, selectedIdx, width, height) {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('SELECT TARGET', width / 2, height * 0.12);
+
+        ctx.fillStyle = '#6688aa';
+        ctx.font = '12px monospace';
+        ctx.fillText('Choose your target aircraft', width / 2, height * 0.17);
+
+        const boxW = width * 0.7;
+        const boxH = height * 0.12;
+        const startY = height * 0.25;
+        const gap = boxH + height * 0.03;
+
+        for (let i = 0; i < aircraft.length; i++) {
+            const ac = aircraft[i];
+            const bx = (width - boxW) / 2;
+            const by = startY + i * gap;
+
+            // box background
+            ctx.fillStyle = '#111122';
+            ctx.fillRect(bx, by, boxW, boxH);
+            ctx.strokeStyle = '#334466';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(bx, by, boxW, boxH);
+
+            // aircraft preview (small version)
+            ctx.save();
+            ctx.translate(bx + boxH * 0.7, by + boxH / 2);
+            ctx.scale(0.7, 0.7);
+            const fakePlane = { x: 0, y: 0, angle: 0, trail: [], aircraftId: ac.id };
+            ctx.translate(-fakePlane.x, -fakePlane.y);
+            this.drawAircraftPreview(ac.id, 0, 0);
+            ctx.restore();
+
+            // name
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(ac.name, bx + boxH * 1.3, by + boxH * 0.4);
+
+            // description
+            ctx.fillStyle = '#8899aa';
+            ctx.font = '11px monospace';
+            ctx.fillText(ac.description, bx + boxH * 1.3, by + boxH * 0.65);
+
+            // stats bar
+            const statX = bx + boxH * 1.3;
+            const statY = by + boxH * 0.82;
+            const statW = boxW - boxH * 1.6;
+
+            // speed indicator
+            ctx.fillStyle = '#444466';
+            ctx.font = '9px monospace';
+            ctx.fillText('SPD', statX, statY);
+            ctx.fillStyle = '#333344';
+            ctx.fillRect(statX + 26, statY - 7, statW * 0.3, 5);
+            ctx.fillStyle = '#44aaff';
+            ctx.fillRect(statX + 26, statY - 7, statW * 0.3 * (ac.speed / 200), 5);
+
+            // toughness
+            ctx.fillStyle = '#444466';
+            ctx.fillText('HP', statX + statW * 0.4, statY);
+            ctx.fillStyle = '#333344';
+            ctx.fillRect(statX + statW * 0.4 + 20, statY - 7, statW * 0.25, 5);
+            ctx.fillStyle = '#44ff88';
+            ctx.fillRect(statX + statW * 0.4 + 20, statY - 7, statW * 0.25 * (ac.hitPoints / 2), 5);
+        }
+    }
+
+    drawAircraftPreview(id, px, py) {
+        const ctx = this.ctx;
+        const size = 18;
+
+        ctx.save();
+        ctx.translate(px, py);
+
+        if (id === 'f16') {
+            ctx.beginPath();
+            ctx.moveTo(size, 0);
+            ctx.lineTo(-size * 0.6, -size * 0.3);
+            ctx.lineTo(-size * 0.85, 0);
+            ctx.lineTo(-size * 0.6, size * 0.3);
+            ctx.closePath();
+            ctx.fillStyle = '#cc2222';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(0, -size * 0.15);
+            ctx.lineTo(-size * 0.2, -size * 0.7);
+            ctx.lineTo(-size * 0.4, -size * 0.6);
+            ctx.lineTo(-size * 0.2, -size * 0.13);
+            ctx.closePath();
+            ctx.fillStyle = '#aa1111';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(0, size * 0.15);
+            ctx.lineTo(-size * 0.2, size * 0.7);
+            ctx.lineTo(-size * 0.4, size * 0.6);
+            ctx.lineTo(-size * 0.2, size * 0.13);
+            ctx.closePath();
+            ctx.fillStyle = '#aa1111';
+            ctx.fill();
+        } else if (id === 'a10') {
+            ctx.beginPath();
+            ctx.moveTo(size * 0.9, 0);
+            ctx.lineTo(-size * 0.7, -size * 0.12);
+            ctx.lineTo(-size * 0.7, size * 0.12);
+            ctx.closePath();
+            ctx.fillStyle = '#556b2f';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.1, -size * 0.12);
+            ctx.lineTo(0, -size * 0.9);
+            ctx.lineTo(-size * 0.25, -size * 0.9);
+            ctx.lineTo(-size * 0.2, -size * 0.11);
+            ctx.closePath();
+            ctx.fillStyle = '#4a6b1f';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.1, size * 0.12);
+            ctx.lineTo(0, size * 0.9);
+            ctx.lineTo(-size * 0.25, size * 0.9);
+            ctx.lineTo(-size * 0.2, size * 0.11);
+            ctx.closePath();
+            ctx.fillStyle = '#4a6b1f';
+            ctx.fill();
+        } else if (id === 'b2') {
+            ctx.beginPath();
+            ctx.moveTo(size * 0.7, 0);
+            ctx.lineTo(-size * 0.5, -size * 0.9);
+            ctx.lineTo(-size * 0.7, -size * 0.8);
+            ctx.lineTo(-size * 0.6, 0);
+            ctx.lineTo(-size * 0.7, size * 0.8);
+            ctx.lineTo(-size * 0.5, size * 0.9);
+            ctx.closePath();
+            ctx.fillStyle = '#2a2a44';
+            ctx.fill();
+            ctx.strokeStyle = '#4a4a6a';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+        } else if (id === 'f22') {
+            ctx.beginPath();
+            ctx.moveTo(size, 0);
+            ctx.lineTo(-size * 0.5, -size * 0.18);
+            ctx.lineTo(-size * 0.8, 0);
+            ctx.lineTo(-size * 0.5, size * 0.18);
+            ctx.closePath();
+            ctx.fillStyle = '#667799';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.1, -size * 0.17);
+            ctx.lineTo(-size * 0.3, -size * 0.8);
+            ctx.lineTo(-size * 0.5, -size * 0.7);
+            ctx.lineTo(-size * 0.25, -size * 0.15);
+            ctx.closePath();
+            ctx.fillStyle = '#556688';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(size * 0.1, size * 0.17);
+            ctx.lineTo(-size * 0.3, size * 0.8);
+            ctx.lineTo(-size * 0.5, size * 0.7);
+            ctx.lineTo(-size * 0.25, size * 0.15);
+            ctx.closePath();
+            ctx.fillStyle = '#556688';
+            ctx.fill();
+        }
 
         ctx.restore();
     }
