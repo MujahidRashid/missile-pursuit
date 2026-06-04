@@ -6,6 +6,7 @@ import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { distance } from './utils.js';
 import { AIRCRAFT } from './aircraft.js';
+import { isUnlocked, unlock, isAircraftLocked, isModeLocked, isLevelLocked, getMaxSams } from './store.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -13,7 +14,7 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 25;
-const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7 };
+const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7, UPGRADE: 8 };
 
 let state = STATE.MENU;
 let missile = null;
@@ -232,12 +233,18 @@ function draw() {
     }
 
     if (state === STATE.SELECT) {
-        renderer.drawAircraftSelect(AIRCRAFT, selectIndex, canvas.width, canvas.height);
+        const lockedIds = AIRCRAFT.map(ac => isAircraftLocked(ac.id));
+        renderer.drawAircraftSelect(AIRCRAFT, selectIndex, canvas.width, canvas.height, lockedIds);
         return;
     }
 
     if (state === STATE.SETTINGS) {
-        renderer.drawSettings(samCount, gameMode, canvas.width, canvas.height);
+        renderer.drawSettings(samCount, gameMode, isModeLocked('realistic'), getMaxSams(), canvas.width, canvas.height);
+        return;
+    }
+
+    if (state === STATE.UPGRADE) {
+        renderer.drawUpgradeScreen(canvas.width, canvas.height);
         return;
     }
 
@@ -377,6 +384,10 @@ function handleTap() {
         const ty = input.y;
         for (const box of boxes) {
             if (tx >= box.x && tx <= box.x + box.w && ty >= box.y && ty <= box.y + box.h) {
+                if (isAircraftLocked(AIRCRAFT[box.index].id)) {
+                    state = STATE.UPGRADE;
+                    return;
+                }
                 selectIndex = box.index;
                 selectedAircraft = AIRCRAFT[selectIndex];
                 level = 1;
@@ -391,11 +402,15 @@ function handleTap() {
         if (hitButton(btns.modeEasy, tx, ty)) {
             gameMode = 'easy';
         } else if (hitButton(btns.modeRealistic, tx, ty)) {
+            if (isModeLocked('realistic')) {
+                state = STATE.UPGRADE;
+                return;
+            }
             gameMode = 'realistic';
         } else if (hitButton(btns.minus, tx, ty)) {
             samCount = Math.max(1, samCount - 1);
         } else if (hitButton(btns.plus, tx, ty)) {
-            samCount = Math.min(5, samCount + 1);
+            samCount = Math.min(getMaxSams(), samCount + 1);
         } else if (hitButton(btns.launch, tx, ty)) {
             startLevel();
         }
@@ -406,8 +421,12 @@ function handleTap() {
         if (hitButton(btns.right, tx, ty)) {
             state = STATE.SELECT;
         } else {
-            level++;
-            startLevel();
+            if (isLevelLocked(level + 1)) {
+                state = STATE.UPGRADE;
+            } else {
+                level++;
+                startLevel();
+            }
         }
     } else if (state === STATE.LOSE) {
         const btns = getEndButtons();
@@ -417,6 +436,21 @@ function handleTap() {
             state = STATE.SELECT;
         } else {
             startLevel();
+        }
+    } else if (state === STATE.UPGRADE) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const tx = input.x;
+        const ty = input.y;
+        const btnW = w * 0.5;
+        const btnH = h * 0.07;
+        const unlockBtn = { x: (w - btnW) / 2, y: h * 0.55, w: btnW, h: btnH };
+        const backBtn = { x: (w - btnW) / 2, y: h * 0.65, w: btnW, h: btnH };
+        if (hitButton(unlockBtn, tx, ty)) {
+            unlock();
+            state = STATE.SELECT;
+        } else if (hitButton(backBtn, tx, ty)) {
+            state = STATE.SELECT;
         }
     }
 }

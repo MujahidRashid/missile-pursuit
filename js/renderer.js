@@ -533,7 +533,7 @@ export class Renderer {
         ctx.restore();
     }
 
-    drawSettings(samCount, gameMode, width, height) {
+    drawSettings(samCount, gameMode, realisticLocked, maxSams, width, height) {
         const ctx = this.ctx;
         const t = this.time;
 
@@ -569,12 +569,12 @@ export class Renderer {
         const realX = modeStartX + modeBtnW + modeGap;
         ctx.fillStyle = gameMode === 'realistic' ? '#1a2244' : '#1a1a33';
         ctx.fillRect(realX, modeY, modeBtnW, modeBtnH);
-        ctx.strokeStyle = gameMode === 'realistic' ? '#4488ff' : '#444466';
+        ctx.strokeStyle = realisticLocked ? '#333333' : (gameMode === 'realistic' ? '#4488ff' : '#444466');
         ctx.lineWidth = 2;
         ctx.strokeRect(realX, modeY, modeBtnW, modeBtnH);
-        ctx.fillStyle = gameMode === 'realistic' ? '#66aaff' : '#888888';
+        ctx.fillStyle = realisticLocked ? '#666666' : (gameMode === 'realistic' ? '#66aaff' : '#888888');
         ctx.font = 'bold 13px monospace';
-        ctx.fillText('REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
+        ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
 
         // mode description
         ctx.fillStyle = '#556677';
@@ -635,7 +635,9 @@ export class Renderer {
         ctx.fillStyle = '#556677';
         ctx.font = '11px monospace';
         const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
-        ctx.fillText(hints[samCount] || '', width / 2, height * 0.56);
+        let hint = hints[samCount] || '';
+        if (maxSams < 5 && samCount >= maxSams) hint += ' (max in free)';
+        ctx.fillText(hint, width / 2, height * 0.56);
 
         // launch button
         const launchW = width * 0.4;
@@ -654,7 +656,70 @@ export class Renderer {
         ctx.fillText('LAUNCH', width / 2, launchY + launchH / 2 + 6);
     }
 
-    drawAircraftSelect(aircraft, selectedIdx, width, height) {
+    drawUpgradeScreen(width, height) {
+        const ctx = this.ctx;
+        const t = this.time;
+
+        // title
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = 'bold 22px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('FULL VERSION', width / 2, height * 0.18);
+
+        // features list
+        ctx.fillStyle = '#aabbcc';
+        ctx.font = '13px monospace';
+        const features = [
+            'All 4 aircraft (B-2 + F-22)',
+            'Realistic mode (radar cone)',
+            'Up to 5 SAM sites',
+            'Unlimited levels',
+            'No ads'
+        ];
+        features.forEach((f, i) => {
+            ctx.fillStyle = '#88aacc';
+            ctx.fillText('+ ' + f, width / 2, height * 0.28 + i * 22);
+        });
+
+        // price
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText('$2.99', width / 2, height * 0.50);
+
+        // unlock button
+        const btnW = width * 0.5;
+        const btnH = height * 0.07;
+        const unlockX = (width - btnW) / 2;
+        const unlockY = height * 0.55;
+
+        const pulse = 0.8 + Math.sin(t * 3) * 0.2;
+        ctx.fillStyle = '#1a4422';
+        ctx.fillRect(unlockX, unlockY, btnW, btnH);
+        ctx.strokeStyle = `rgba(68, 255, 120, ${pulse})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(unlockX, unlockY, btnW, btnH);
+        ctx.fillStyle = '#44ff88';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText('UNLOCK FULL GAME', width / 2, unlockY + btnH / 2 + 5);
+
+        // back button
+        const backY = height * 0.65;
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(unlockX, backY, btnW, btnH);
+        ctx.strokeStyle = '#444466';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(unlockX, backY, btnW, btnH);
+        ctx.fillStyle = '#888899';
+        ctx.font = '12px monospace';
+        ctx.fillText('BACK', width / 2, backY + btnH / 2 + 4);
+
+        // restore note
+        ctx.fillStyle = '#556677';
+        ctx.font = '9px monospace';
+        ctx.fillText('One-time purchase. No subscriptions.', width / 2, height * 0.78);
+    }
+
+    drawAircraftSelect(aircraft, selectedIdx, width, height, lockedIds = []) {
         const ctx = this.ctx;
         const t = this.time;
 
@@ -677,11 +742,12 @@ export class Renderer {
             const ac = aircraft[i];
             const bx = (width - boxW) / 2;
             const by = startY + i * gap;
+            const locked = lockedIds[i];
 
             // box background
-            ctx.fillStyle = '#111122';
+            ctx.fillStyle = locked ? '#0a0a15' : '#111122';
             ctx.fillRect(bx, by, boxW, boxH);
-            ctx.strokeStyle = '#334466';
+            ctx.strokeStyle = locked ? '#222233' : '#334466';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(bx, by, boxW, boxH);
 
@@ -726,6 +792,15 @@ export class Renderer {
             ctx.fillRect(statX + statW * 0.4 + 20, statY - 7, statW * 0.25, 5);
             ctx.fillStyle = '#44ff88';
             ctx.fillRect(statX + statW * 0.4 + 20, statY - 7, statW * 0.25 * (ac.hitPoints / 2), 5);
+
+            if (locked) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(bx, by, boxW, boxH);
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = 'bold 12px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('FULL VERSION', bx + boxW / 2, by + boxH / 2 + 4);
+            }
         }
     }
 
