@@ -160,6 +160,7 @@ function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
     lastTime = timestamp;
 
+    renderer.tick(dt);
     update(dt);
     draw();
 
