@@ -9,7 +9,8 @@ export const AIRCRAFT = [
         flareCooldown: 3.0,
         flareDeployDist: 160,
         hitPoints: 1,
-        turnSpeed: 2.5
+        turnSpeed: 2.5,
+        radarSignature: 400
     },
     {
         id: 'a10',
@@ -21,7 +22,8 @@ export const AIRCRAFT = [
         flareCooldown: 2.0,
         flareDeployDist: 200,
         hitPoints: 2,
-        turnSpeed: 1.5
+        turnSpeed: 1.5,
+        radarSignature: 500
     },
     {
         id: 'b2',
@@ -33,7 +35,8 @@ export const AIRCRAFT = [
         flareCooldown: 2.5,
         flareDeployDist: 220,
         hitPoints: 1,
-        turnSpeed: 1.2
+        turnSpeed: 1.2,
+        radarSignature: 600
     },
     {
         id: 'f22',
@@ -45,6 +48,7 @@ export const AIRCRAFT = [
         flareCooldown: 4.0,
         flareDeployDist: 140,
         hitPoints: 1,
-        turnSpeed: 3.0
+        turnSpeed: 3.0,
+        radarSignature: 180
     }
 ];

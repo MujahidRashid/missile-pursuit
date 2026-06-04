@@ -17,8 +17,12 @@ export class Missile {
         this.coneHalfAngle = Math.PI / 4; // 45 degrees each side = 90 degree cone
     }
 
-    isInCone(target) {
-        const angleToTarget = Math.atan2(target.y - this.y, target.x - this.x);
+    isInCone(target, detectionRange = 800) {
+        const dx = target.x - this.x;
+        const dy = target.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > detectionRange) return false;
+        const angleToTarget = Math.atan2(dy, dx);
         const diff = Math.abs(normalizeAngle(angleToTarget - this.angle));
         return diff <= this.coneHalfAngle;
     }

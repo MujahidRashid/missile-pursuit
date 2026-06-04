@@ -68,6 +68,7 @@ function startLevel() {
     plane.flareDeployDist = ac.flareDeployDist;
     plane.flareCount = ac.flareCount;
     plane.hitPoints = ac.hitPoints;
+    plane.radarSignature = ac.radarSignature;
     plane.angle = 0;
     plane.targetAngle = 0;
     plane.introMode = true;
@@ -152,7 +153,7 @@ function update(dt) {
         plane.update(dt, missile);
         for (const s of sams) s.update(dt, missile);
 
-        targetVisible = (gameMode === 'easy') || missile.isInCone(plane);
+        targetVisible = (gameMode === 'easy') || missile.isInCone(plane, plane.radarSignature || 400);
 
         const SAM_HIT_DIST = 16;
         let samHit = false;
@@ -262,7 +263,7 @@ function draw() {
     if (friendlyJet) renderer.drawFriendlyJet(friendlyJet);
 
     if (gameMode === 'realistic' && missile && missile.alive) {
-        renderer.drawRadarCone(missile);
+        renderer.drawRadarCone(missile, plane ? plane.radarSignature : 400);
     }
 
     if (plane && (targetVisible || state !== STATE.PLAYING)) renderer.drawPlane(plane);

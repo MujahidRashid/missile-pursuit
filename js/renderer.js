@@ -1373,10 +1373,10 @@ export class Renderer {
         }
     }
 
-    drawRadarCone(missile) {
+    drawRadarCone(missile, detectionRange = 400) {
         const ctx = this.ctx;
         const { x, y, angle, coneHalfAngle } = missile;
-        const coneRange = 800;
+        const coneRange = detectionRange;
 
         ctx.save();
 
