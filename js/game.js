@@ -55,7 +55,7 @@ function startLevel() {
     const groundTop = terrain.getGroundY(w / 2) - 80;
     const introHeight = h * 0.15 + Math.random() * (groundTop - h * 0.15 - 40);
 
-    plane = new Plane(-60, introHeight, w, h);
+    plane = new Plane(w * 0.3, introHeight, w, h);
     plane.terrain = terrain;
     plane.aircraftId = ac.id;
     plane.speed = ac.speed + level * 15;
@@ -71,10 +71,10 @@ function startLevel() {
 
     missile = null;
     friendlyJet = {
-        x: -160,
+        x: -60,
         y: introHeight,
         angle: 0,
-        speed: 250,
+        speed: 300,
         fired: false,
         phase: 'chase'
     };
@@ -88,7 +88,6 @@ function update(dt) {
         const w = canvas.width;
         const jet = friendlyJet;
 
-        // move target plane forward in intro (straight line)
         if (plane.introMode) {
             plane.x += 250 * dt;
             plane.angle = 0;
@@ -98,20 +97,25 @@ function update(dt) {
         jet.x += Math.cos(jet.angle) * jet.speed * dt;
         jet.y += Math.sin(jet.angle) * jet.speed * dt;
 
-        if (jet.phase === 'chase' && plane.x >= w * 0.5) {
+        if (jet.phase === 'chase' && jet.x >= w * 0.15) {
             jet.fired = true;
             jet.phase = 'exit';
             jet.angle = -0.6;
-            jet.speed = 350;
+            jet.speed = 400;
             missile = new Missile(jet.x + 20, jet.y);
             missile.angle = 0;
-        }
 
-        if (jet.phase === 'exit' && (jet.x > w + 80 || jet.y < -80)) {
             state = STATE.PLAYING;
-            friendlyJet = null;
             plane.introMode = false;
             plane.evasionLevel = Math.min(selectedAircraft.evasion, 3);
+        }
+    }
+
+    if (friendlyJet && friendlyJet.phase === 'exit') {
+        friendlyJet.x += Math.cos(friendlyJet.angle) * friendlyJet.speed * dt;
+        friendlyJet.y += Math.sin(friendlyJet.angle) * friendlyJet.speed * dt;
+        if (friendlyJet.x > canvas.width + 80 || friendlyJet.y < -80) {
+            friendlyJet = null;
         }
     }
 
@@ -215,6 +219,7 @@ function draw() {
 
     if (terrain) renderer.drawTerrain(terrain);
 
+    if (friendlyJet) renderer.drawFriendlyJet(friendlyJet);
     if (plane) renderer.drawPlane(plane);
     if (missile) renderer.drawMissile(missile);
 
