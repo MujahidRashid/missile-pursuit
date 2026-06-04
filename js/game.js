@@ -159,7 +159,8 @@ function draw() {
     if (state === STATE.WIN) {
         renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
         if (explosionProgress >= 1) {
-            renderer.drawMessage('TARGET HIT', 'Tap for next level', canvas.width, canvas.height);
+            renderer.drawMessage('TARGET HIT', null, canvas.width, canvas.height);
+            renderer.drawEndButtons('NEXT LEVEL', 'CHANGE AIRCRAFT', canvas.width, canvas.height);
         }
     }
 
@@ -175,7 +176,8 @@ function draw() {
         if (loseReason !== 'OUT OF ENERGY') {
             renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
         }
-        renderer.drawMessage(loseReason, 'Tap to retry', canvas.width, canvas.height);
+        renderer.drawMessage(loseReason, null, canvas.width, canvas.height);
+        renderer.drawEndButtons('RETRY', 'CHANGE AIRCRAFT', canvas.width, canvas.height);
     }
 }
 
@@ -206,6 +208,25 @@ function getSelectBoxes() {
     }));
 }
 
+function getEndButtons() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnW = w * 0.35;
+    const btnH = h * 0.06;
+    const gap = w * 0.04;
+    const totalW = btnW * 2 + gap;
+    const startX = (w - totalW) / 2;
+    const btnY = h / 2 + 30;
+    return {
+        left: { x: startX, y: btnY, w: btnW, h: btnH },
+        right: { x: startX + btnW + gap, y: btnY, w: btnW, h: btnH }
+    };
+}
+
+function hitButton(btn, tx, ty) {
+    return tx >= btn.x && tx <= btn.x + btn.w && ty >= btn.y && ty <= btn.y + btn.h;
+}
+
 function handleTap() {
     if (state === STATE.MENU) {
         state = STATE.SELECT;
@@ -223,10 +244,24 @@ function handleTap() {
             }
         }
     } else if (state === STATE.WIN && explosionProgress >= 1) {
-        level++;
-        startLevel();
+        const btns = getEndButtons();
+        const tx = input.x;
+        const ty = input.y;
+        if (hitButton(btns.right, tx, ty)) {
+            state = STATE.SELECT;
+        } else {
+            level++;
+            startLevel();
+        }
     } else if (state === STATE.LOSE) {
-        startLevel();
+        const btns = getEndButtons();
+        const tx = input.x;
+        const ty = input.y;
+        if (hitButton(btns.right, tx, ty)) {
+            state = STATE.SELECT;
+        } else {
+            startLevel();
+        }
     }
 }
 

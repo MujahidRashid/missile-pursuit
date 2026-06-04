@@ -769,6 +769,37 @@ export class Renderer {
         }
     }
 
+    drawEndButtons(leftLabel, rightLabel, width, height) {
+        const ctx = this.ctx;
+        const btnW = width * 0.35;
+        const btnH = height * 0.06;
+        const gap = width * 0.04;
+        const totalW = btnW * 2 + gap;
+        const startX = (width - totalW) / 2;
+        const btnY = height / 2 + 30;
+
+        // left button (continue/retry)
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect(startX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#4488cc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(leftLabel, startX + btnW / 2, btnY + btnH / 2 + 5);
+
+        // right button (change aircraft)
+        ctx.fillStyle = '#1a1a33';
+        ctx.fillRect(startX + btnW + gap, btnY, btnW, btnH);
+        ctx.strokeStyle = '#666688';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX + btnW + gap, btnY, btnW, btnH);
+        ctx.fillStyle = '#aaaacc';
+        ctx.font = '12px monospace';
+        ctx.fillText(rightLabel, startX + btnW + gap + btnW / 2, btnY + btnH / 2 + 4);
+    }
+
     drawLevel(level, width) {
         const ctx = this.ctx;
         ctx.fillStyle = '#666688';
