@@ -1,10 +1,10 @@
 import { normalizeAngle } from './utils.js';
 
 export class Missile {
-    constructor(x, y) {
+    constructor(x, y, angle = -Math.PI / 2) {
         this.x = x;
         this.y = y;
-        this.angle = -Math.PI / 2; // pointing up
+        this.angle = angle;
         this.speed = 220;
         this.energy = 1.0;
         this.energyDrain = 0.06; // per second base drain

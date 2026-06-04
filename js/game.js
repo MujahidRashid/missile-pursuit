@@ -102,8 +102,7 @@ function update(dt) {
             jet.phase = 'exit';
             jet.angle = -0.6;
             jet.speed = 400;
-            missile = new Missile(jet.x + 20, jet.y);
-            missile.angle = 0;
+            missile = new Missile(jet.x + 20, jet.y, 0);
 
             state = STATE.PLAYING;
             plane.introMode = false;
