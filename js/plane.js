@@ -139,9 +139,18 @@ export class Plane {
 
     wrapBounds() {
         const margin = 50;
-        if (this.x < margin) this.targetAngle = 0;
-        if (this.x > this.canvasWidth - margin) this.targetAngle = Math.PI;
-        if (this.y < margin) this.targetAngle = Math.PI / 2;
+        if (this.x < margin) {
+            this.x = margin;
+            this.targetAngle = 0;
+        }
+        if (this.x > this.canvasWidth - margin) {
+            this.x = this.canvasWidth - margin;
+            this.targetAngle = Math.PI;
+        }
+        if (this.y < margin) {
+            this.y = margin;
+            this.targetAngle = Math.PI / 2;
+        }
 
         const groundLimit = this.terrain
             ? this.terrain.getGroundY(this.x) - 60

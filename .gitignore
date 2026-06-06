@@ -4,3 +4,7 @@ www/
 android/app/build/
 *.apk
 *.aab
+
+.DS_Store
+.idea/
+android/.idea/

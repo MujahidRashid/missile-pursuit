@@ -6,7 +6,8 @@ import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { distance } from './utils.js';
 import { AIRCRAFT } from './aircraft.js';
-import { isUnlocked, unlock, isAircraftLocked, isModeLocked, isLevelLocked, getMaxSams } from './store.js';
+import { isUnlocked, purchaseFullGame, restorePurchases, initStore, isAircraftLocked, isModeLocked, isLevelLocked, getMaxSams } from './store.js';
+import { initAds, showInterstitial } from './ads.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -346,7 +347,7 @@ function hitButton(btn, tx, ty) {
 function getSettingsButtons() {
     const w = canvas.width;
     const h = canvas.height;
-    const btnSize = Math.min(w * 0.12, 50);
+    const btnSize = Math.min(w * 0.12, 50 * renderer.s);
     const samY = h * 0.42;
     const launchW = w * 0.4;
     const launchH = h * 0.07;
@@ -414,8 +415,10 @@ function handleTap() {
             if (isLevelLocked(level + 1)) {
                 state = STATE.UPGRADE;
             } else {
-                level++;
-                startLevel();
+                showInterstitial().then(() => {
+                    level++;
+                    startLevel();
+                });
             }
         }
     } else if (state === STATE.LOSE) {
@@ -436,11 +439,17 @@ function handleTap() {
         const btnH = h * 0.07;
         const unlockBtn = { x: (w - btnW) / 2, y: h * 0.55, w: btnW, h: btnH };
         const backBtn = { x: (w - btnW) / 2, y: h * 0.65, w: btnW, h: btnH };
+        const restoreBtn = { x: (w - btnW) / 2, y: h * 0.75, w: btnW, h: btnH };
         if (hitButton(unlockBtn, tx, ty)) {
-            unlock();
-            state = STATE.SELECT;
+            purchaseFullGame().then(success => {
+                if (success) state = STATE.SELECT;
+            });
         } else if (hitButton(backBtn, tx, ty)) {
             state = STATE.SELECT;
+        } else if (hitButton(restoreBtn, tx, ty)) {
+            restorePurchases().then(restored => {
+                if (restored) state = STATE.SELECT;
+            });
         }
     }
 }
@@ -455,6 +464,9 @@ function init() {
             handleTap();
         }
     });
+
+    initStore();
+    initAds();
 
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);

@@ -2,6 +2,11 @@ export class Renderer {
     constructor(ctx) {
         this.ctx = ctx;
         this.time = 0;
+        // Visual scale factor. The canvas backing store is super-sampled by
+        // devicePixelRatio, so fixed-pixel text/icons appear tiny on hi-DPI
+        // phones. Drawing them `s` times larger restores a readable physical
+        // size. Only affects visuals — game coordinates/speeds are unchanged.
+        this.s = window.devicePixelRatio || 1;
     }
 
     tick(dt) {
@@ -24,6 +29,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // exhaust flame (animated)
         const flameLen = 8 + Math.sin(t * 30) * 3 + Math.sin(t * 47) * 2;
@@ -144,6 +150,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // engine exhaust (animated)
         const exLen = 6 + Math.sin(t * 35) * 2;
@@ -270,6 +277,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // twin engines exhaust
         const exLen = 5 + Math.sin(t * 30) * 1.5;
@@ -379,6 +387,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // flying wing shape
         ctx.beginPath();
@@ -437,6 +446,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // twin engine afterburner
         const abLen = 8 + Math.sin(t * 40) * 3;
@@ -539,13 +549,13 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px monospace';
+        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('MISSION SETTINGS', width / 2, height * 0.1);
 
         // mode selection
         ctx.fillStyle = '#8899aa';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.fillText('MODE', width / 2, height * 0.17);
 
         const modeBtnW = width * 0.3;
@@ -562,7 +572,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(modeStartX, modeY, modeBtnW, modeBtnH);
         ctx.fillStyle = gameMode === 'easy' ? '#44ff88' : '#888888';
-        ctx.font = 'bold 13px monospace';
+        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
         ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
 
         // realistic button
@@ -573,12 +583,12 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(realX, modeY, modeBtnW, modeBtnH);
         ctx.fillStyle = realisticLocked ? '#666666' : (gameMode === 'realistic' ? '#66aaff' : '#888888');
-        ctx.font = 'bold 13px monospace';
+        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
         ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
 
         // mode description
         ctx.fillStyle = '#556677';
-        ctx.font = '10px monospace';
+        ctx.font = `${Math.round(10 * this.s)}px monospace`;
         if (gameMode === 'easy') {
             ctx.fillText('Full visibility - see everything', width / 2, modeY + modeBtnH + 14);
         } else {
@@ -587,11 +597,11 @@ export class Renderer {
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.fillText('SAM SITES', width / 2, height * 0.37);
 
         // minus button
-        const btnSize = Math.min(width * 0.12, 50);
+        const btnSize = Math.min(width * 0.12, 50 * this.s);
         const centerY = height * 0.42;
 
         ctx.fillStyle = '#1a2233';
@@ -600,25 +610,25 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px monospace';
+        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
         ctx.fillText('-', width * 0.25, centerY + 8);
 
         // count display
         ctx.fillStyle = '#00e5ff';
-        ctx.font = 'bold 40px monospace';
+        ctx.font = `bold ${Math.round(40 * this.s)}px monospace`;
         ctx.fillText(samCount.toString(), width / 2, centerY + 14);
 
         // SAM icons
-        const iconSpacing = 20;
+        const iconSpacing = 20 * this.s;
         const totalIconW = (samCount - 1) * iconSpacing;
         const iconStartX = width / 2 - totalIconW / 2;
         for (let i = 0; i < samCount; i++) {
             const ix = iconStartX + i * iconSpacing;
-            const iy = centerY + 35;
+            const iy = centerY + 35 * this.s;
             ctx.fillStyle = '#445566';
-            ctx.fillRect(ix - 4, iy, 8, 5);
+            ctx.fillRect(ix - 4 * this.s, iy, 8 * this.s, 5 * this.s);
             ctx.fillStyle = '#667788';
-            ctx.fillRect(ix - 1, iy - 6, 2, 6);
+            ctx.fillRect(ix - 1 * this.s, iy - 6 * this.s, 2 * this.s, 6 * this.s);
         }
 
         // plus button
@@ -628,12 +638,12 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(width * 0.75 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px monospace';
+        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
         ctx.fillText('+', width * 0.75, centerY + 8);
 
         // difficulty hint
         ctx.fillStyle = '#556677';
-        ctx.font = '11px monospace';
+        ctx.font = `${Math.round(11 * this.s)}px monospace`;
         const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
         let hint = hints[samCount] || '';
         if (maxSams < 5 && samCount >= maxSams) hint += ' (max in free)';
@@ -652,7 +662,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(launchX, launchY, launchW, launchH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px monospace';
+        ctx.font = `bold ${Math.round(16 * this.s)}px monospace`;
         ctx.fillText('LAUNCH', width / 2, launchY + launchH / 2 + 6);
     }
 
@@ -662,13 +672,13 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffcc00';
-        ctx.font = 'bold 22px monospace';
+        ctx.font = `bold ${Math.round(22 * this.s)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('FULL VERSION', width / 2, height * 0.18);
 
         // features list
         ctx.fillStyle = '#aabbcc';
-        ctx.font = '13px monospace';
+        ctx.font = `${Math.round(13 * this.s)}px monospace`;
         const features = [
             'All 4 aircraft (B-2 + F-22)',
             'Realistic mode (radar cone)',
@@ -678,12 +688,12 @@ export class Renderer {
         ];
         features.forEach((f, i) => {
             ctx.fillStyle = '#88aacc';
-            ctx.fillText('+ ' + f, width / 2, height * 0.28 + i * 22);
+            ctx.fillText('+ ' + f, width / 2, height * 0.28 + i * 22 * this.s);
         });
 
         // price
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 18px monospace';
+        ctx.font = `bold ${Math.round(18 * this.s)}px monospace`;
         ctx.fillText('$2.99', width / 2, height * 0.50);
 
         // unlock button
@@ -699,7 +709,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(unlockX, unlockY, btnW, btnH);
         ctx.fillStyle = '#44ff88';
-        ctx.font = 'bold 14px monospace';
+        ctx.font = `bold ${Math.round(14 * this.s)}px monospace`;
         ctx.fillText('UNLOCK FULL GAME', width / 2, unlockY + btnH / 2 + 5);
 
         // back button
@@ -710,13 +720,24 @@ export class Renderer {
         ctx.lineWidth = 1;
         ctx.strokeRect(unlockX, backY, btnW, btnH);
         ctx.fillStyle = '#888899';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.fillText('BACK', width / 2, backY + btnH / 2 + 4);
 
-        // restore note
+        // restore purchases button
+        const restoreY = height * 0.75;
+        ctx.fillStyle = '#1a1a2a';
+        ctx.fillRect(unlockX, restoreY, btnW, btnH);
+        ctx.strokeStyle = '#334455';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(unlockX, restoreY, btnW, btnH);
+        ctx.fillStyle = '#6688aa';
+        ctx.font = `${Math.round(11 * this.s)}px monospace`;
+        ctx.fillText('RESTORE PURCHASES', width / 2, restoreY + btnH / 2 + 4);
+
+        // note
         ctx.fillStyle = '#556677';
-        ctx.font = '9px monospace';
-        ctx.fillText('One-time purchase. No subscriptions.', width / 2, height * 0.78);
+        ctx.font = `${Math.round(9 * this.s)}px monospace`;
+        ctx.fillText('One-time purchase. No subscriptions.', width / 2, height * 0.88);
     }
 
     drawAircraftSelect(aircraft, selectedIdx, width, height, lockedIds = []) {
@@ -725,12 +746,12 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px monospace';
+        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('SELECT TARGET', width / 2, height * 0.12);
 
         ctx.fillStyle = '#6688aa';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.fillText('Choose your target aircraft', width / 2, height * 0.17);
 
         const boxW = width * 0.7;
@@ -762,13 +783,13 @@ export class Renderer {
 
             // name
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 14px monospace';
+            ctx.font = `bold ${Math.round(14 * this.s)}px monospace`;
             ctx.textAlign = 'left';
             ctx.fillText(ac.name, bx + boxH * 1.3, by + boxH * 0.4);
 
             // description
             ctx.fillStyle = '#8899aa';
-            ctx.font = '11px monospace';
+            ctx.font = `${Math.round(11 * this.s)}px monospace`;
             ctx.fillText(ac.description, bx + boxH * 1.3, by + boxH * 0.65);
 
             // stats bar
@@ -778,7 +799,7 @@ export class Renderer {
 
             // speed indicator
             ctx.fillStyle = '#444466';
-            ctx.font = '9px monospace';
+            ctx.font = `${Math.round(9 * this.s)}px monospace`;
             ctx.fillText('SPD', statX, statY);
             ctx.fillStyle = '#333344';
             ctx.fillRect(statX + 26, statY - 7, statW * 0.3, 5);
@@ -797,7 +818,7 @@ export class Renderer {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 ctx.fillRect(bx, by, boxW, boxH);
                 ctx.fillStyle = '#ffcc00';
-                ctx.font = 'bold 12px monospace';
+                ctx.font = `bold ${Math.round(12 * this.s)}px monospace`;
                 ctx.textAlign = 'center';
                 ctx.fillText('FULL VERSION', bx + boxW / 2, by + boxH / 2 + 4);
             }
@@ -810,6 +831,7 @@ export class Renderer {
 
         ctx.save();
         ctx.translate(px, py);
+        ctx.scale(this.s, this.s);
 
         if (id === 'f16') {
             ctx.beginPath();
@@ -924,9 +946,9 @@ export class Renderer {
     drawEnergyBar(energy, width) {
         const ctx = this.ctx;
         const barWidth = width * 0.6;
-        const barHeight = 12;
+        const barHeight = 12 * this.s;
         const x = (width - barWidth) / 2;
-        const y = 20;
+        const y = 20 * this.s;
 
         // background
         ctx.fillStyle = '#1a1a2e';
@@ -945,23 +967,23 @@ export class Renderer {
 
         // label
         ctx.fillStyle = '#aaaacc';
-        ctx.font = '11px monospace';
+        ctx.font = `${Math.round(11 * this.s)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('ENERGY', width / 2, y + barHeight + 14);
+        ctx.fillText('ENERGY', width / 2, y + barHeight + 14 * this.s);
     }
 
     drawMessage(text, subtext, width, height) {
         const ctx = this.ctx;
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 32px monospace';
+        ctx.font = `bold ${Math.round(32 * this.s)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText(text, width / 2, height / 2 - 20);
+        ctx.fillText(text, width / 2, height / 2 - 20 * this.s);
 
         if (subtext) {
             ctx.fillStyle = '#aaaacc';
-            ctx.font = '16px monospace';
-            ctx.fillText(subtext, width / 2, height / 2 + 20);
+            ctx.font = `${Math.round(16 * this.s)}px monospace`;
+            ctx.fillText(subtext, width / 2, height / 2 + 30 * this.s);
         }
     }
 
@@ -981,7 +1003,7 @@ export class Renderer {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(startX, btnY, btnW, btnH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 13px monospace';
+        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText(leftLabel, startX + btnW / 2, btnY + btnH / 2 + 5);
 
@@ -992,21 +1014,21 @@ export class Renderer {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(startX + btnW + gap, btnY, btnW, btnH);
         ctx.fillStyle = '#aaaacc';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.fillText(rightLabel, startX + btnW + gap + btnW / 2, btnY + btnH / 2 + 4);
     }
 
     drawLevel(level, width) {
         const ctx = this.ctx;
         ctx.fillStyle = '#666688';
-        ctx.font = '12px monospace';
+        ctx.font = `${Math.round(12 * this.s)}px monospace`;
         ctx.textAlign = 'right';
-        ctx.fillText(`LEVEL ${level}`, width - 20, 32);
+        ctx.fillText(`LEVEL ${level}`, width - 20 * this.s, 32 * this.s);
     }
 
     drawCrosshair(x, y) {
         const ctx = this.ctx;
-        const size = 10;
+        const size = 10 * this.s;
 
         ctx.strokeStyle = '#00e5ff';
         ctx.lineWidth = 1;
@@ -1035,6 +1057,7 @@ export class Renderer {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
+        ctx.scale(this.s, this.s);
 
         // afterburner
         const abLen = 10 + Math.sin(t * 45) * 3;
@@ -1158,6 +1181,7 @@ export class Renderer {
 
         ctx.save();
         ctx.translate(sam.x, sam.y);
+        ctx.scale(this.s, this.s);
 
         // platform base
         ctx.beginPath();
@@ -1238,6 +1262,7 @@ export class Renderer {
             ctx.save();
             ctx.translate(r.x, r.y);
             ctx.rotate(r.angle);
+            ctx.scale(this.s, this.s);
 
             // rocket exhaust (animated)
             const rFlame = 6 + Math.sin(t * 40 + r.life * 10) * 2;
@@ -1314,17 +1339,17 @@ export class Renderer {
             const flicker = 0.7 + Math.random() * 0.3;
 
             ctx.beginPath();
-            ctx.arc(f.x, f.y, f.radius * alpha, 0, Math.PI * 2);
+            ctx.arc(f.x, f.y, f.radius * this.s * alpha, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(255, 240, 100, ${alpha * flicker})`;
             ctx.fill();
 
             ctx.beginPath();
-            ctx.arc(f.x, f.y, f.radius * 0.5 * alpha, 0, Math.PI * 2);
+            ctx.arc(f.x, f.y, f.radius * this.s * 0.5 * alpha, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
             ctx.fill();
 
             ctx.beginPath();
-            ctx.arc(f.x, f.y, f.radius * 1.5 * alpha, 0, Math.PI * 2);
+            ctx.arc(f.x, f.y, f.radius * this.s * 1.5 * alpha, 0, Math.PI * 2);
             ctx.fillStyle = `rgba(255, 200, 50, ${alpha * 0.2})`;
             ctx.fill();
         }
@@ -1332,7 +1357,7 @@ export class Renderer {
 
     drawExplosion(x, y, progress) {
         const ctx = this.ctx;
-        const maxRadius = 50;
+        const maxRadius = 50 * this.s;
         const radius = maxRadius * progress;
         const alpha = 1 - progress;
 
@@ -1503,7 +1528,7 @@ export class Renderer {
 
             // blip label
             ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
-            ctx.font = '8px monospace';
+            ctx.font = `${Math.round(8 * this.s)}px monospace`;
             ctx.textAlign = 'center';
             ctx.fillText('TGT', bx, by - 7);
         }
@@ -1524,7 +1549,7 @@ export class Renderer {
 
         // border label
         ctx.fillStyle = '#336644';
-        ctx.font = '8px monospace';
+        ctx.font = `${Math.round(8 * this.s)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('DATALINK', cx, cy - radius - 5);
     }

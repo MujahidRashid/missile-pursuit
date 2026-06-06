@@ -91,10 +91,27 @@ You'll need:
 ### 6. Pricing & In-App Products:
 
 - Set app as Free
-- Go to Monetize → Products → In-app products
-- Create product ID: `full_game_unlock`
-- Price: $2.99
-- Title: "Full Game Unlock"
+
+### 7. In-App Purchase Setup:
+
+1. Go to **Monetize → Products → In-app products**
+2. Click "Create product"
+3. Fill in:
+   - Product ID: `full_game_unlock` (must match exactly)
+   - Name: "Full Game Unlock"
+   - Description: "Unlock all aircraft, realistic mode, unlimited levels, and 5 SAM sites"
+   - Price: $2.99
+4. Set status to **Active**
+5. Save
+
+**Testing purchases:**
+
+- Go to Settings → License testing
+- Add your Google account email as a licensed tester
+- Licensed testers can make purchases without being charged
+- The purchase dialog will show "Test card, always approves" as a payment method
+
+**Important:** The in-app product must be Active and the app must be published (at least to internal testing track) before purchases work on a device.
 
 ## App Icon
 
