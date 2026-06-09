@@ -40,6 +40,8 @@ export class Plane {
             this.behaviorLevel3(dt, missile);
         }
 
+        this.avoidBoundaries();
+
         if (missile && missile.alive && this.flareCooldown <= 0) {
             const dist = distance(this, missile);
             if (dist < this.flareDeployDist) {
@@ -137,19 +139,41 @@ export class Plane {
         }
     }
 
+    avoidBoundaries() {
+        const lookahead = 100;
+        const margin = 50;
+
+        const nextX = this.x + Math.cos(this.angle) * this.speed * 0.1;
+        const nextY = this.y + Math.sin(this.angle) * this.speed * 0.1;
+
+        if (nextX < margin) {
+            this.targetAngle = 0;
+        } else if (nextX > this.canvasWidth - margin) {
+            this.targetAngle = Math.PI;
+        }
+
+        if (nextY < margin) {
+            this.targetAngle = Math.PI / 2;
+        } else {
+            const groundLimit = this.terrain
+                ? this.terrain.getGroundY(this.x) - 60
+                : this.canvasHeight - margin;
+            if (nextY > groundLimit) {
+                this.targetAngle = -Math.PI / 2;
+            }
+        }
+    }
+
     wrapBounds() {
         const margin = 50;
         if (this.x < margin) {
             this.x = margin;
-            this.targetAngle = 0;
         }
         if (this.x > this.canvasWidth - margin) {
             this.x = this.canvasWidth - margin;
-            this.targetAngle = Math.PI;
         }
         if (this.y < margin) {
             this.y = margin;
-            this.targetAngle = Math.PI / 2;
         }
 
         const groundLimit = this.terrain
@@ -158,7 +182,6 @@ export class Plane {
 
         if (this.y > groundLimit) {
             this.y = groundLimit;
-            this.targetAngle = -Math.PI / 2;
         }
     }
 }

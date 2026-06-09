@@ -14,7 +14,7 @@ const ctx = canvas.getContext('2d');
 const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
-const HIT_DISTANCE = 25;
+const HIT_DISTANCE = 40;
 const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7, UPGRADE: 8 };
 
 let state = STATE.MENU;
@@ -38,6 +38,7 @@ let friendlyJet = null;
 function resize() {
     canvas.width = window.innerWidth * window.devicePixelRatio;
     canvas.height = window.innerHeight * window.devicePixelRatio;
+    renderer.setCanvasDimensions(canvas.width, canvas.height);
 }
 
 function startLevel() {
@@ -64,7 +65,7 @@ function startLevel() {
     plane.terrain = terrain;
     plane.aircraftId = ac.id;
     plane.speed = ac.speed + level * 15;
-    plane.evasionLevel = 0;
+    plane.evasionLevel = Math.min(3, Math.floor((level + 1) / 2));
     plane.turnSpeed = ac.turnSpeed;
     plane.flareCooldownTime = ac.flareCooldown;
     plane.flareDeployDist = ac.flareDeployDist;
@@ -113,7 +114,6 @@ function update(dt) {
 
             state = STATE.PLAYING;
             plane.introMode = false;
-            plane.evasionLevel = Math.min(selectedAircraft.evasion, 3);
         }
     }
 
@@ -263,7 +263,9 @@ function draw() {
         renderer.drawEnergyBar(missile.energy, canvas.width);
     }
 
-    renderer.drawLevel(level, canvas.width);
+    if (plane) {
+        renderer.drawLevel(level, plane.evasionLevel, canvas.width);
+    }
 
     if (input.active && state === STATE.PLAYING) {
         renderer.drawCrosshair(input.x, input.y);

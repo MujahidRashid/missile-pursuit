@@ -7,6 +7,37 @@ export class Renderer {
         // phones. Drawing them `s` times larger restores a readable physical
         // size. Only affects visuals — game coordinates/speeds are unchanged.
         this.s = window.devicePixelRatio || 1;
+        this.canvasWidth = 0;
+        this.canvasHeight = 0;
+    }
+
+    setCanvasDimensions(width, height) {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+    }
+
+    getResponsiveFont(baseSize) {
+        const minDim = Math.min(this.canvasWidth, this.canvasHeight);
+        const scale = Math.max(0.7, Math.min(1, minDim / 800));
+        return Math.round(baseSize * this.s * scale);
+    }
+
+    wrapText(ctx, text, maxWidth) {
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+
+        for (const word of words) {
+            const testLine = currentLine ? currentLine + ' ' + word : word;
+            if (ctx.measureText(testLine).width <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine) lines.push(currentLine);
+                currentLine = word;
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
     }
 
     tick(dt) {
@@ -549,13 +580,13 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('MISSION SETTINGS', width / 2, height * 0.1);
 
         // mode selection
         ctx.fillStyle = '#8899aa';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.fillText('MODE', width / 2, height * 0.17);
 
         const modeBtnW = width * 0.3;
@@ -572,7 +603,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(modeStartX, modeY, modeBtnW, modeBtnH);
         ctx.fillStyle = gameMode === 'easy' ? '#44ff88' : '#888888';
-        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
         ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
 
         // realistic button
@@ -583,21 +614,21 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(realX, modeY, modeBtnW, modeBtnH);
         ctx.fillStyle = realisticLocked ? '#666666' : (gameMode === 'realistic' ? '#66aaff' : '#888888');
-        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
         ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
 
         // mode description
         ctx.fillStyle = '#556677';
-        ctx.font = `${Math.round(10 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
         if (gameMode === 'easy') {
-            ctx.fillText('Full visibility - see everything', width / 2, modeY + modeBtnH + 14);
+            ctx.fillText('Full visibility - see everything', width / 2, modeY + modeBtnH + 40);
         } else {
-            ctx.fillText('Radar cone + datalink only', width / 2, modeY + modeBtnH + 14);
+            ctx.fillText('Radar cone + datalink only', width / 2, modeY + modeBtnH + 40);
         }
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.fillText('SAM SITES', width / 2, height * 0.37);
 
         // minus button
@@ -610,12 +641,12 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.fillText('-', width * 0.25, centerY + 8);
 
         // count display
         ctx.fillStyle = '#00e5ff';
-        ctx.font = `bold ${Math.round(40 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(40)}px monospace`;
         ctx.fillText(samCount.toString(), width / 2, centerY + 14);
 
         // SAM icons
@@ -638,12 +669,12 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(width * 0.75 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.fillText('+', width * 0.75, centerY + 8);
 
         // difficulty hint
         ctx.fillStyle = '#556677';
-        ctx.font = `${Math.round(11 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
         const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
         let hint = hints[samCount] || '';
         if (maxSams < 5 && samCount >= maxSams) hint += ' (max in free)';
@@ -662,7 +693,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(launchX, launchY, launchW, launchH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(16 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(16)}px monospace`;
         ctx.fillText('LAUNCH', width / 2, launchY + launchH / 2 + 6);
     }
 
@@ -672,13 +703,13 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffcc00';
-        ctx.font = `bold ${Math.round(22 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(22)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('FULL VERSION', width / 2, height * 0.18);
 
         // features list
         ctx.fillStyle = '#aabbcc';
-        ctx.font = `${Math.round(13 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(13)}px monospace`;
         const features = [
             'All 4 aircraft (B-2 + F-22)',
             'Realistic mode (radar cone)',
@@ -693,7 +724,7 @@ export class Renderer {
 
         // price
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(18 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(18)}px monospace`;
         ctx.fillText('$2.99', width / 2, height * 0.50);
 
         // unlock button
@@ -709,7 +740,7 @@ export class Renderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(unlockX, unlockY, btnW, btnH);
         ctx.fillStyle = '#44ff88';
-        ctx.font = `bold ${Math.round(14 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
         ctx.fillText('UNLOCK FULL GAME', width / 2, unlockY + btnH / 2 + 5);
 
         // back button
@@ -720,7 +751,7 @@ export class Renderer {
         ctx.lineWidth = 1;
         ctx.strokeRect(unlockX, backY, btnW, btnH);
         ctx.fillStyle = '#888899';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.fillText('BACK', width / 2, backY + btnH / 2 + 4);
 
         // restore purchases button
@@ -731,12 +762,12 @@ export class Renderer {
         ctx.lineWidth = 1;
         ctx.strokeRect(unlockX, restoreY, btnW, btnH);
         ctx.fillStyle = '#6688aa';
-        ctx.font = `${Math.round(11 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
         ctx.fillText('RESTORE PURCHASES', width / 2, restoreY + btnH / 2 + 4);
 
         // note
         ctx.fillStyle = '#556677';
-        ctx.font = `${Math.round(9 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(9)}px monospace`;
         ctx.fillText('One-time purchase. No subscriptions.', width / 2, height * 0.88);
     }
 
@@ -746,18 +777,19 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(24 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('SELECT TARGET', width / 2, height * 0.12);
 
         ctx.fillStyle = '#6688aa';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.fillText('Choose your target aircraft', width / 2, height * 0.17);
 
         const boxW = width * 0.7;
         const boxH = height * 0.12;
         const startY = height * 0.25;
         const gap = boxH + height * 0.03;
+        const isPortrait = this.canvasWidth < this.canvasHeight;
 
         for (let i = 0; i < aircraft.length; i++) {
             const ac = aircraft[i];
@@ -781,25 +813,35 @@ export class Renderer {
             this.drawAircraftPreview(ac.id, 0, 0);
             ctx.restore();
 
+            // text area dimensions
+            const textStartX = bx + boxH * 1.3;
+            const maxTextWidth = boxW - boxH * 1.6 - 10;
+
             // name
             ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${Math.round(14 * this.s)}px monospace`;
+            const nameFont = this.getResponsiveFont(isPortrait ? 11 : 14);
+            ctx.font = `bold ${nameFont}px monospace`;
             ctx.textAlign = 'left';
-            ctx.fillText(ac.name, bx + boxH * 1.3, by + boxH * 0.4);
+            ctx.fillText(ac.name, textStartX, by + boxH * 0.35);
 
-            // description
+            // description (wrapped)
             ctx.fillStyle = '#8899aa';
-            ctx.font = `${Math.round(11 * this.s)}px monospace`;
-            ctx.fillText(ac.description, bx + boxH * 1.3, by + boxH * 0.65);
+            const descFont = this.getResponsiveFont(isPortrait ? 8 : 11);
+            ctx.font = `${descFont}px monospace`;
+            const descLines = this.wrapText(ctx, ac.description, maxTextWidth);
+            const lineHeight = descFont * 1.2;
+            descLines.forEach((line, idx) => {
+                ctx.fillText(line, textStartX, by + boxH * 0.52 + idx * lineHeight);
+            });
 
             // stats bar
-            const statX = bx + boxH * 1.3;
+            const statX = textStartX;
             const statY = by + boxH * 0.82;
-            const statW = boxW - boxH * 1.6;
+            const statW = maxTextWidth;
 
             // speed indicator
             ctx.fillStyle = '#444466';
-            ctx.font = `${Math.round(9 * this.s)}px monospace`;
+            ctx.font = `${this.getResponsiveFont(isPortrait ? 7 : 9)}px monospace`;
             ctx.fillText('SPD', statX, statY);
             ctx.fillStyle = '#333344';
             ctx.fillRect(statX + 26, statY - 7, statW * 0.3, 5);
@@ -818,7 +860,7 @@ export class Renderer {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
                 ctx.fillRect(bx, by, boxW, boxH);
                 ctx.fillStyle = '#ffcc00';
-                ctx.font = `bold ${Math.round(12 * this.s)}px monospace`;
+                ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
                 ctx.textAlign = 'center';
                 ctx.fillText('FULL VERSION', bx + boxW / 2, by + boxH / 2 + 4);
             }
@@ -967,7 +1009,7 @@ export class Renderer {
 
         // label
         ctx.fillStyle = '#aaaacc';
-        ctx.font = `${Math.round(11 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('ENERGY', width / 2, y + barHeight + 14 * this.s);
     }
@@ -976,13 +1018,13 @@ export class Renderer {
         const ctx = this.ctx;
 
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(32 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(32)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText(text, width / 2, height / 2 - 20 * this.s);
 
         if (subtext) {
             ctx.fillStyle = '#aaaacc';
-            ctx.font = `${Math.round(16 * this.s)}px monospace`;
+            ctx.font = `${this.getResponsiveFont(16)}px monospace`;
             ctx.fillText(subtext, width / 2, height / 2 + 30 * this.s);
         }
     }
@@ -1003,7 +1045,7 @@ export class Renderer {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(startX, btnY, btnW, btnH);
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${Math.round(13 * this.s)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText(leftLabel, startX + btnW / 2, btnY + btnH / 2 + 5);
 
@@ -1014,16 +1056,19 @@ export class Renderer {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(startX + btnW + gap, btnY, btnW, btnH);
         ctx.fillStyle = '#aaaacc';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.fillText(rightLabel, startX + btnW + gap + btnW / 2, btnY + btnH / 2 + 4);
     }
 
-    drawLevel(level, width) {
+    drawLevel(level, evasionLevel, width) {
         const ctx = this.ctx;
-        ctx.fillStyle = '#666688';
-        ctx.font = `${Math.round(12 * this.s)}px monospace`;
+        const threats = ['', 'EASY', 'MEDIUM', 'HARD'];
+        const threatColor = evasionLevel === 1 ? '#44cc88' : evasionLevel === 2 ? '#ccaa44' : '#cc4444';
+
+        ctx.fillStyle = threatColor;
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.textAlign = 'right';
-        ctx.fillText(`LEVEL ${level}`, width - 20 * this.s, 32 * this.s);
+        ctx.fillText(`LEVEL ${level} - ${threats[evasionLevel]}`, width - 20 * this.s, 32 * this.s);
     }
 
     drawCrosshair(x, y) {
@@ -1528,7 +1573,7 @@ export class Renderer {
 
             // blip label
             ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
-            ctx.font = `${Math.round(8 * this.s)}px monospace`;
+            ctx.font = `${this.getResponsiveFont(8)}px monospace`;
             ctx.textAlign = 'center';
             ctx.fillText('TGT', bx, by - 7);
         }
@@ -1549,7 +1594,7 @@ export class Renderer {
 
         // border label
         ctx.fillStyle = '#336644';
-        ctx.font = `${Math.round(8 * this.s)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(8)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('DATALINK', cx, cy - radius - 5);
     }
