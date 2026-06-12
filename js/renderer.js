@@ -582,71 +582,73 @@ export class Renderer {
         ctx.fillStyle = '#ffffff';
         ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('MISSION SETTINGS', width / 2, height * 0.1);
+        ctx.fillText('MISSION SETTINGS', width / 2, height * 0.09);
 
         // daily challenge banner
+        let modeY = height * 0.2;
         if (dailyChallenge && !dailyCompleted) {
             ctx.fillStyle = '#1a2233';
-            ctx.fillRect(width * 0.1, height * 0.13, width * 0.8, height * 0.06);
+            ctx.fillRect(width * 0.1, height * 0.13, width * 0.8, height * 0.055);
             ctx.strokeStyle = '#ffcc00';
             ctx.lineWidth = 1.5;
-            ctx.strokeRect(width * 0.1, height * 0.13, width * 0.8, height * 0.06);
+            ctx.strokeRect(width * 0.1, height * 0.13, width * 0.8, height * 0.055);
             ctx.fillStyle = '#ffcc00';
-            ctx.font = `bold ${this.getResponsiveFont(11)}px monospace`;
+            ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
             ctx.textAlign = 'center';
-            ctx.fillText(`TODAY: ${dailyChallenge.name} - Level ${dailyChallenge.level}, ${dailyChallenge.sams} SAMs`, width / 2, height * 0.167);
+            ctx.fillText(`TODAY: ${dailyChallenge.name} - Level ${dailyChallenge.level}, ${dailyChallenge.sams} SAMs`, width / 2, height * 0.1575);
+            modeY = height * 0.205;
         }
 
         // mode selection
         ctx.fillStyle = '#8899aa';
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText('MODE', width / 2, height * 0.17);
+        ctx.fillText('MODE', width / 2, modeY);
 
         const modeBtnW = width * 0.3;
         const modeBtnH = height * 0.055;
-        const modeY = height * 0.22;
+        const modeBtnY = modeY + height * 0.04;
         const modeGap = width * 0.04;
         const modeTotalW = modeBtnW * 2 + modeGap;
         const modeStartX = (width - modeTotalW) / 2;
 
         // easy button
         ctx.fillStyle = gameMode === 'easy' ? '#1a4433' : '#1a1a33';
-        ctx.fillRect(modeStartX, modeY, modeBtnW, modeBtnH);
+        ctx.fillRect(modeStartX, modeBtnY, modeBtnW, modeBtnH);
         ctx.strokeStyle = gameMode === 'easy' ? '#44cc88' : '#444466';
         ctx.lineWidth = 2;
-        ctx.strokeRect(modeStartX, modeY, modeBtnW, modeBtnH);
+        ctx.strokeRect(modeStartX, modeBtnY, modeBtnW, modeBtnH);
         ctx.fillStyle = gameMode === 'easy' ? '#44ff88' : '#888888';
         ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
-        ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
+        ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeBtnY + modeBtnH / 2 + 5);
 
         // realistic button
         const realX = modeStartX + modeBtnW + modeGap;
         ctx.fillStyle = gameMode === 'realistic' ? '#1a2244' : '#1a1a33';
-        ctx.fillRect(realX, modeY, modeBtnW, modeBtnH);
+        ctx.fillRect(realX, modeBtnY, modeBtnW, modeBtnH);
         ctx.strokeStyle = realisticLocked ? '#333333' : (gameMode === 'realistic' ? '#4488ff' : '#444466');
         ctx.lineWidth = 2;
-        ctx.strokeRect(realX, modeY, modeBtnW, modeBtnH);
+        ctx.strokeRect(realX, modeBtnY, modeBtnW, modeBtnH);
         ctx.fillStyle = realisticLocked ? '#666666' : (gameMode === 'realistic' ? '#66aaff' : '#888888');
         ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
-        ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeY + modeBtnH / 2 + 5);
+        ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeBtnY + modeBtnH / 2 + 5);
 
         // mode description
         ctx.fillStyle = '#556677';
         ctx.font = `${this.getResponsiveFont(10)}px monospace`;
         if (gameMode === 'easy') {
-            ctx.fillText('Full visibility - see everything', width / 2, modeY + modeBtnH + 40);
+            ctx.fillText('Full visibility - see everything', width / 2, modeBtnY + modeBtnH + 30);
         } else {
-            ctx.fillText('Radar cone + datalink only', width / 2, modeY + modeBtnH + 40);
+            ctx.fillText('Radar cone + datalink only', width / 2, modeBtnY + modeBtnH + 30);
         }
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText('SAM SITES', width / 2, height * 0.37);
+        ctx.fillText('SAM SITES', width / 2, height * 0.32);
 
         // minus button
         const btnSize = Math.min(width * 0.12, 50 * this.s);
-        const centerY = height * 0.42;
+        const centerY = height * 0.37;
 
         ctx.fillStyle = '#1a2233';
         ctx.fillRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
@@ -668,7 +670,7 @@ export class Renderer {
         const iconStartX = width / 2 - totalIconW / 2;
         for (let i = 0; i < samCount; i++) {
             const ix = iconStartX + i * iconSpacing;
-            const iy = centerY + 35 * this.s;
+            const iy = centerY + 30 * this.s;
             ctx.fillStyle = '#445566';
             ctx.fillRect(ix - 4 * this.s, iy, 8 * this.s, 5 * this.s);
             ctx.fillStyle = '#667788';
@@ -691,13 +693,13 @@ export class Renderer {
         const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
         let hint = hints[samCount] || '';
         if (maxSams < 5 && samCount >= maxSams) hint += ' (max in free)';
-        ctx.fillText(hint, width / 2, height * 0.56);
+        ctx.fillText(hint, width / 2, height * 0.505);
 
         // launch button
         const launchW = width * 0.4;
         const launchH = height * 0.07;
         const launchX = (width - launchW) / 2;
-        const launchY = height * 0.72;
+        const launchY = height * 0.62;
 
         const pulse = 0.8 + Math.sin(t * 3) * 0.2;
         ctx.fillStyle = '#1a3355';
