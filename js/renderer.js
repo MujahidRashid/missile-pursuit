@@ -1161,68 +1161,57 @@ export class Renderer {
         ctx.font = `${this.getResponsiveFont(11)}px monospace`;
         ctx.fillText(`${stats.unlockedCount} / ${stats.total} (${stats.percentage}%)`, width / 2, height * 0.13);
 
-        // achievements grid
-        const cols = 2;
-        const itemW = width * 0.42;
-        const itemH = height * 0.17;
-        const gapX = width * 0.03;
-        const startX = (width - itemW * cols - gapX) / 2;
+        // achievements list (vertical)
+        const itemW = width * 0.8;
+        const itemH = height * 0.08;
+        const gap = height * 0.01;
+        const startX = (width - itemW) / 2;
         const startY = height * 0.19;
-        const gapY = height * 0.02;
+        const iconW = itemH * 0.8;
 
-        let y = startY;
-        for (let i = 0; i < achievements.length; i += cols) {
-            for (let j = 0; j < cols && i + j < achievements.length; j++) {
-                const ach = achievements[i + j];
-                const isUnlocked = unlockedIds[i + j];
-                const x = startX + j * (itemW + gapX);
-                const padding = 10;
+        for (let i = 0; i < achievements.length; i++) {
+            const ach = achievements[i];
+            const isUnlocked = unlockedIds[i];
+            const y = startY + i * (itemH + gap);
 
-                // background
-                ctx.fillStyle = isUnlocked ? '#1a2a1a' : '#111122';
-                ctx.fillRect(x, y, itemW, itemH);
-                ctx.strokeStyle = isUnlocked ? '#44ff88' : '#444466';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x, y, itemW, itemH);
+            // background
+            ctx.fillStyle = isUnlocked ? '#1a2a1a' : '#111122';
+            ctx.fillRect(startX, y, itemW, itemH);
+            ctx.strokeStyle = isUnlocked ? '#44ff88' : '#444466';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(startX, y, itemW, itemH);
 
-                // icon - centered vertically and horizontally in left portion
-                ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${this.getResponsiveFont(22)}px monospace`;
-                ctx.textAlign = 'center';
+            // icon
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${this.getResponsiveFont(20)}px monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ach.icon, startX + iconW / 2 + 5, y + itemH / 2);
+
+            // checkmark for unlocked
+            if (isUnlocked) {
+                ctx.fillStyle = '#44ff88';
+                ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
+                ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(ach.icon, x + padding + 12, y + itemH * 0.5);
-
-                // checkmark for unlocked - top right corner
-                if (isUnlocked) {
-                    ctx.fillStyle = '#44ff88';
-                    ctx.font = `bold ${this.getResponsiveFont(16)}px monospace`;
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'top';
-                    ctx.fillText('✓', x + itemW - 6, y + 4);
-                }
-
-                // name - right side, top
-                ctx.fillStyle = isUnlocked ? '#44ff88' : '#ffffff';
-                ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                const nameX = x + padding + 28;
-                const maxNameWidth = itemW - 38;
-                ctx.fillText(ach.name.substring(0, 11), nameX, y + padding + 2);
-
-                // description - right side, below name
-                ctx.fillStyle = isUnlocked ? '#66cc88' : '#8899aa';
-                ctx.font = `${this.getResponsiveFont(8)}px monospace`;
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                const descLines = this.wrapText(ctx, ach.description, maxNameWidth);
-                const descY = y + itemH * 0.55;
-                const lineHeight = 11;
-                descLines.slice(0, 2).forEach((line, idx) => {
-                    ctx.fillText(line, nameX, descY + idx * lineHeight);
-                });
+                ctx.fillText('✓', startX + itemW - 10, y + itemH / 2);
             }
-            y += itemH + gapY;
+
+            // name
+            ctx.fillStyle = isUnlocked ? '#44ff88' : '#ffffff';
+            ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const textStartX = startX + iconW + 15;
+            const textWidth = itemW - iconW - 30;
+            ctx.fillText(ach.name, textStartX, y + itemH * 0.35);
+
+            // description
+            ctx.fillStyle = isUnlocked ? '#66cc88' : '#8899aa';
+            ctx.font = `${this.getResponsiveFont(8)}px monospace`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ach.description, textStartX, y + itemH * 0.7);
         }
 
         // back text
