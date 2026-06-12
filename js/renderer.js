@@ -1163,13 +1163,14 @@ export class Renderer {
 
         // achievements list (vertical)
         const itemW = width * 0.8;
-        const itemH = height * 0.08;
-        const gap = height * 0.01;
+        const itemH = height * 0.07;
+        const gap = height * 0.008;
         const startX = (width - itemW) / 2;
-        const startY = height * 0.19;
+        const startY = height * 0.18;
         const iconW = itemH * 0.8;
+        const maxItemsVisible = 9;
 
-        for (let i = 0; i < achievements.length; i++) {
+        for (let i = 0; i < Math.min(achievements.length, maxItemsVisible); i++) {
             const ach = achievements[i];
             const isUnlocked = unlockedIds[i];
             const y = startY + i * (itemH + gap);
@@ -1218,7 +1219,7 @@ export class Renderer {
         ctx.fillStyle = '#888899';
         ctx.font = `${this.getResponsiveFont(9)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('Tap to return', width / 2, height - 15 * this.s);
+        ctx.fillText('Tap to return', width / 2, height - 20 * this.s);
     }
 
     drawAchievementNotification(achievement, width, height) {
