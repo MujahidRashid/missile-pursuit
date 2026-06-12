@@ -1147,7 +1147,7 @@ export class Renderer {
         ctx.fillText('HOW TO PLAY', width / 2, howY + btnH / 2 + 4);
     }
 
-    drawAchievements(achievements, stats, width, height) {
+    drawAchievements(achievements, stats, unlockedIds = [], width, height) {
         const ctx = this.ctx;
 
         // title
@@ -1174,14 +1174,15 @@ export class Renderer {
         for (let i = 0; i < achievements.length; i += cols) {
             for (let j = 0; j < cols && i + j < achievements.length; j++) {
                 const ach = achievements[i + j];
+                const isUnlocked = unlockedIds[i + j];
                 const x = startX + j * (itemW + gapX);
                 const padding = 8;
 
                 // background
-                ctx.fillStyle = '#111122';
+                ctx.fillStyle = isUnlocked ? '#1a2a1a' : '#111122';
                 ctx.fillRect(x, y, itemW, itemH);
-                ctx.strokeStyle = '#444466';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = isUnlocked ? '#44ff88' : '#444466';
+                ctx.lineWidth = 2;
                 ctx.strokeRect(x, y, itemW, itemH);
 
                 // icon
@@ -1190,8 +1191,16 @@ export class Renderer {
                 ctx.textAlign = 'center';
                 ctx.fillText(ach.icon, x + padding + 10, y + itemH * 0.35);
 
+                // checkmark for unlocked
+                if (isUnlocked) {
+                    ctx.fillStyle = '#44ff88';
+                    ctx.font = `bold ${this.getResponsiveFont(18)}px monospace`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText('✓', x + itemW - 15, y + 15);
+                }
+
                 // name
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = isUnlocked ? '#44ff88' : '#ffffff';
                 ctx.font = `bold ${this.getResponsiveFont(9)}px monospace`;
                 ctx.textAlign = 'left';
                 const nameX = x + padding + 25;
@@ -1199,7 +1208,7 @@ export class Renderer {
                 ctx.fillText(ach.name.substring(0, 12), nameX, y + itemH * 0.3);
 
                 // description - wrapped
-                ctx.fillStyle = '#8899aa';
+                ctx.fillStyle = isUnlocked ? '#66cc88' : '#8899aa';
                 ctx.font = `${this.getResponsiveFont(7)}px monospace`;
                 ctx.textAlign = 'left';
                 const descLines = this.wrapText(ctx, ach.description, maxNameWidth);

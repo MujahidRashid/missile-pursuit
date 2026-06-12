@@ -313,7 +313,8 @@ function draw() {
 
     if (state === STATE.ACHIEVEMENTS) {
         const stats = getAchievementStats();
-        renderer.drawAchievements(ACHIEVEMENTS, stats, canvas.width, canvas.height);
+        const unlockedIds = ACHIEVEMENTS.map(a => isAchievementUnlocked(a.id));
+        renderer.drawAchievements(ACHIEVEMENTS, stats, unlockedIds, canvas.width, canvas.height);
         return;
     }
 
