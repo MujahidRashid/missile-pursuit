@@ -574,7 +574,7 @@ export class Renderer {
         ctx.restore();
     }
 
-    drawSettings(samCount, gameMode, realisticLocked, maxSams, width, height) {
+    drawSettings(samCount, gameMode, realisticLocked, maxSams, width, height, dailyChallenge = null, dailyCompleted = false) {
         const ctx = this.ctx;
         const t = this.time;
 
@@ -583,6 +583,19 @@ export class Renderer {
         ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('MISSION SETTINGS', width / 2, height * 0.1);
+
+        // daily challenge banner
+        if (dailyChallenge && !dailyCompleted) {
+            ctx.fillStyle = '#1a2233';
+            ctx.fillRect(width * 0.1, height * 0.13, width * 0.8, height * 0.06);
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(width * 0.1, height * 0.13, width * 0.8, height * 0.06);
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = `bold ${this.getResponsiveFont(11)}px monospace`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`TODAY: ${dailyChallenge.name} - Level ${dailyChallenge.level}, ${dailyChallenge.sams} SAMs`, width / 2, height * 0.167);
+        }
 
         // mode selection
         ctx.fillStyle = '#8899aa';
@@ -769,6 +782,60 @@ export class Renderer {
         ctx.fillStyle = '#556677';
         ctx.font = `${this.getResponsiveFont(9)}px monospace`;
         ctx.fillText('One-time purchase. No subscriptions.', width / 2, height * 0.88);
+    }
+
+    drawMissileSelect(missiles, lockedIds = [], width, height) {
+        const ctx = this.ctx;
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('SELECT MISSILE', width / 2, height * 0.12);
+
+        ctx.fillStyle = '#6688aa';
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
+        ctx.fillText('Choose your missile system', width / 2, height * 0.17);
+
+        const boxW = width * 0.7;
+        const boxH = height * 0.12;
+        const startY = height * 0.25;
+        const gap = boxH + height * 0.03;
+
+        missiles.forEach((missile, i) => {
+            const bx = (width - boxW) / 2;
+            const by = startY + i * gap;
+            const locked = lockedIds[i];
+
+            // box background
+            ctx.fillStyle = locked ? '#0a0a15' : '#111122';
+            ctx.fillRect(bx, by, boxW, boxH);
+            ctx.strokeStyle = locked ? '#222233' : '#4488cc';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(bx, by, boxW, boxH);
+
+            // name
+            ctx.fillStyle = locked ? '#666677' : '#ffffff';
+            ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
+            ctx.textAlign = 'left';
+            ctx.fillText(missile.name, bx + 20, by + boxH * 0.35);
+
+            // stats
+            ctx.fillStyle = locked ? '#555566' : '#8899aa';
+            const statsFont = this.getResponsiveFont(11);
+            ctx.font = `${statsFont}px monospace`;
+            const statY = by + boxH * 0.65;
+            ctx.fillText(`Speed: ${missile.speed} | Range: ${missile.detectionRange} | Energy: ${missile.energy}`, bx + 20, statY);
+
+            if (locked) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(bx, by, boxW, boxH);
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillText('FULL VERSION', bx + boxW / 2, by + boxH / 2 + 4);
+            }
+        });
     }
 
     drawAircraftSelect(aircraft, selectedIdx, width, height, lockedIds = []) {
@@ -1029,6 +1096,217 @@ export class Renderer {
         }
     }
 
+    drawMenuButtons(width, height) {
+        const ctx = this.ctx;
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(36)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('MISSILE PURSUIT', width / 2, height * 0.3);
+
+        // play button
+        const btnW = width * 0.35;
+        const btnH = height * 0.05;
+        const playY = height / 2 - 40;
+
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect((width - btnW) / 2, playY, btnW, btnH);
+        ctx.strokeStyle = '#4488cc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect((width - btnW) / 2, playY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('PLAY', width / 2, playY + btnH / 2 + 4);
+
+        // achievements button
+        const achY = height / 2 + 20;
+        ctx.fillStyle = '#1a2a1a';
+        ctx.fillRect((width - btnW) / 2, achY, btnW, btnH);
+        ctx.strokeStyle = '#44cc88';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect((width - btnW) / 2, achY, btnW, btnH);
+        ctx.fillStyle = '#44ff88';
+        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('ACHIEVEMENTS', width / 2, achY + btnH / 2 + 3);
+
+        // how to play button
+        const howY = height / 2 + 80;
+        ctx.fillStyle = '#1a1a33';
+        ctx.fillRect((width - btnW) / 2, howY, btnW, btnH);
+        ctx.strokeStyle = '#666688';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect((width - btnW) / 2, howY, btnW, btnH);
+        ctx.fillStyle = '#aaaacc';
+        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('HOW TO PLAY', width / 2, howY + btnH / 2 + 3);
+    }
+
+    drawAchievements(achievements, stats, width, height) {
+        const ctx = this.ctx;
+
+        // title
+        ctx.fillStyle = '#44ff88';
+        ctx.font = `bold ${this.getResponsiveFont(28)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('ACHIEVEMENTS', width / 2, height * 0.1);
+
+        // stats bar
+        ctx.fillStyle = '#aabbcc';
+        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
+        ctx.fillText(`${stats.unlockedCount} / ${stats.total} (${stats.percentage}%)`, width / 2, height * 0.15);
+
+        // achievements grid
+        const cols = 2;
+        const itemW = width * 0.4;
+        const itemH = height * 0.15;
+        const startX = (width - itemW * cols - width * 0.08) / 2;
+        const startY = height * 0.22;
+        const gapY = height * 0.02;
+
+        let y = startY;
+        for (let i = 0; i < achievements.length; i += cols) {
+            for (let j = 0; j < cols && i + j < achievements.length; j++) {
+                const ach = achievements[i + j];
+                const x = startX + j * (itemW + width * 0.04);
+
+                // background
+                ctx.fillStyle = '#111122';
+                ctx.fillRect(x, y, itemW, itemH);
+                ctx.strokeStyle = '#444466';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y, itemW, itemH);
+
+                // icon
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
+                ctx.textAlign = 'center';
+                ctx.fillText(ach.icon, x + itemW * 0.15, y + itemH * 0.4);
+
+                // name
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
+                ctx.textAlign = 'left';
+                ctx.fillText(ach.name, x + itemW * 0.35, y + itemH * 0.35);
+
+                // description
+                ctx.fillStyle = '#8899aa';
+                ctx.font = `${this.getResponsiveFont(8)}px monospace`;
+                ctx.fillText(ach.description, x + itemW * 0.35, y + itemH * 0.65);
+            }
+            y += itemH + gapY;
+        }
+
+        // back text
+        ctx.fillStyle = '#888899';
+        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Tap to return', width / 2, height - 20 * this.s);
+    }
+
+    drawAchievementNotification(achievement, width, height) {
+        const ctx = this.ctx;
+        const x = width * 0.5;
+        const y = height * 0.15;
+        const boxW = width * 0.7;
+        const boxH = height * 0.1;
+
+        // semi-transparent bg
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect((width - boxW) / 2, y - boxH / 2, boxW, boxH);
+        ctx.strokeStyle = '#44ff88';
+        ctx.lineWidth = 2;
+        ctx.strokeRect((width - boxW) / 2, y - boxH / 2, boxW, boxH);
+
+        // icon
+        ctx.fillStyle = '#44ff88';
+        ctx.font = `bold ${this.getResponsiveFont(32)}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(achievement.icon, (width - boxW) / 2 + 10, y + boxH * 0.15);
+
+        // text
+        ctx.fillStyle = '#44ff88';
+        ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(achievement.name, (width - boxW) / 2 + 50, y - 5);
+
+        ctx.fillStyle = '#aabbcc';
+        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        ctx.fillText(achievement.description, (width - boxW) / 2 + 50, y + 15);
+    }
+
+    drawHowToPlay(width, height) {
+        const ctx = this.ctx;
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(26)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('HOW TO PLAY', width / 2, height * 0.08);
+
+        // instructions
+        const lines = [
+            'GAMEPLAY:',
+            'Select aircraft → Choose missile → Set difficulty',
+            'Guide missile by tapping the screen',
+            'Avoid terrain and SAM fire',
+            '',
+            'EASY MODE:',
+            'Full visibility - see all threats clearly',
+            '',
+            'REALISTIC MODE: (Premium)',
+            'Most challenging & rewarding!',
+            '• Missile has radar cone - limited vision',
+            '• Datalink shows radar display',
+            '• Can only see target in cone range',
+            '• SAM positions appear on radar',
+            '• Requires true tactical guidance',
+            '',
+            'FREE VERSION:',
+            '• 2 Aircraft (F-16, A-10)',
+            '• Standard Missile',
+            '• Easy Mode only',
+            '',
+            'PREMIUM ($2.99):',
+            '• 2 More Aircraft (B-2, F-22)',
+            '• Advanced & Tactical Missiles',
+            '• Realistic Mode unlocked'
+        ];
+
+        ctx.fillStyle = '#aabbcc';
+        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        ctx.textAlign = 'center';
+        let y = height * 0.16;
+        const lineHeight = 16 * this.s;
+        lines.forEach(line => {
+            if (line === '') {
+                y += 3 * this.s;
+            } else if (line.includes('MODE:') || line.includes('VERSION:') || line.includes('GAMEPLAY:')) {
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
+            } else if (line.includes('REALISTIC')) {
+                ctx.fillStyle = '#ff6666';
+                ctx.font = `bold ${this.getResponsiveFont(11)}px monospace`;
+            } else if (line.includes('Most challenging')) {
+                ctx.fillStyle = '#ff8888';
+                ctx.font = `italic ${this.getResponsiveFont(10)}px monospace`;
+            } else {
+                ctx.fillStyle = '#aabbcc';
+                ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+            }
+            ctx.fillText(line, width / 2, y);
+            y += lineHeight;
+        });
+
+        // back text
+        ctx.fillStyle = '#888899';
+        ctx.font = `${this.getResponsiveFont(9)}px monospace`;
+        ctx.fillText('Tap to return', width / 2, height - 20 * this.s);
+    }
+
     drawEndButtons(leftLabel, rightLabel, width, height) {
         const ctx = this.ctx;
         const btnW = width * 0.35;
@@ -1060,6 +1338,51 @@ export class Renderer {
         ctx.fillText(rightLabel, startX + btnW + gap + btnW / 2, btnY + btnH / 2 + 4);
     }
 
+    drawLoseButtons(width, height) {
+        const ctx = this.ctx;
+        const btnW = width * 0.28;
+        const btnH = height * 0.06;
+        const gap = width * 0.025;
+        const totalW = btnW * 3 + gap * 2;
+        const startX = (width - totalW) / 2;
+        const btnY = height / 2 + 30;
+
+        // retry button
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect(startX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#4488cc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(startX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(11)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('RETRY', startX + btnW / 2, btnY + btnH / 2 + 4);
+
+        // change aircraft button
+        const acX = startX + btnW + gap;
+        ctx.fillStyle = '#1a1a33';
+        ctx.fillRect(acX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#666688';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(acX, btnY, btnW, btnH);
+        ctx.fillStyle = '#aaaacc';
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('AIRCRAFT', acX + btnW / 2, btnY + btnH / 2 + 4);
+
+        // exit to menu button
+        const exitX = acX + btnW + gap;
+        ctx.fillStyle = '#331a1a';
+        ctx.fillRect(exitX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#cc4444';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(exitX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ccaaaa';
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('MENU', exitX + btnW / 2, btnY + btnH / 2 + 4);
+    }
+
     drawLevel(level, evasionLevel, width) {
         const ctx = this.ctx;
         const threats = ['', 'EASY', 'MEDIUM', 'HARD'];
@@ -1069,6 +1392,14 @@ export class Renderer {
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
         ctx.textAlign = 'right';
         ctx.fillText(`LEVEL ${level} - ${threats[evasionLevel]}`, width - 20 * this.s, 32 * this.s);
+    }
+
+    drawMissileType(missileType, width) {
+        const ctx = this.ctx;
+        ctx.fillStyle = '#00e5ff';
+        ctx.font = `bold ${this.getResponsiveFont(11)}px monospace`;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${missileType.name}`, width - 20 * this.s, 50 * this.s);
     }
 
     drawCrosshair(x, y) {
@@ -1597,5 +1928,79 @@ export class Renderer {
         ctx.font = `${this.getResponsiveFont(8)}px monospace`;
         ctx.textAlign = 'center';
         ctx.fillText('DATALINK', cx, cy - radius - 5);
+    }
+
+    drawPauseButtons(width, height) {
+        const ctx = this.ctx;
+        const btnW = width * 0.2;
+        const btnH = height * 0.05;
+        const gap = width * 0.02;
+        const btnY = height - btnH - gap;
+        const btnX = gap;
+
+        // pause button
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect(btnX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#4488cc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(btnX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSE', btnX + btnW / 2, btnY + btnH / 2 + 4);
+
+        // exit button
+        const exitX = btnX + btnW + gap;
+        ctx.fillStyle = '#331a1a';
+        ctx.fillRect(exitX, btnY, btnW, btnH);
+        ctx.strokeStyle = '#cc4444';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(exitX, btnY, btnW, btnH);
+        ctx.fillStyle = '#ccaaaa';
+        ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('EXIT', exitX + btnW / 2, btnY + btnH / 2 + 4);
+    }
+
+    drawPauseMenu(width, height) {
+        const ctx = this.ctx;
+
+        // semi-transparent overlay
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, width, height);
+
+        // title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(32)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', width / 2, height / 2 - 50 * this.s);
+
+        // resume button
+        const btnW = width * 0.35;
+        const btnH = height * 0.06;
+        const resumeX = (width - btnW) / 2;
+        const resumeY = height / 2 + 20 * this.s;
+
+        ctx.fillStyle = '#1a3355';
+        ctx.fillRect(resumeX, resumeY, btnW, btnH);
+        ctx.strokeStyle = '#4488cc';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(resumeX, resumeY, btnW, btnH);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('RESUME', width / 2, resumeY + btnH / 2 + 5);
+
+        // exit button
+        const exitY = resumeY + btnH + 15 * this.s;
+        ctx.fillStyle = '#331a1a';
+        ctx.fillRect(resumeX, exitY, btnW, btnH);
+        ctx.strokeStyle = '#cc4444';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(resumeX, exitY, btnW, btnH);
+        ctx.fillStyle = '#ccaaaa';
+        ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('EXIT MISSION', width / 2, exitY + btnH / 2 + 5);
     }
 }

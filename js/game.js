@@ -1,4 +1,4 @@
-import { Missile } from './missile.js';
+import { Missile, MISSILE_TYPES } from './missile.js';
 import { Plane } from './plane.js';
 import { SAMSite } from './sam.js';
 import { Terrain } from './terrain.js';
@@ -8,6 +8,9 @@ import { distance } from './utils.js';
 import { AIRCRAFT } from './aircraft.js';
 import { isUnlocked, purchaseFullGame, restorePurchases, initStore, isAircraftLocked, isModeLocked, isLevelLocked, getMaxSams } from './store.js';
 import { initAds, showInterstitial } from './ads.js';
+import { unlockAchievement, isAchievementUnlocked, getAchievementStats, ACHIEVEMENTS } from './achievements.js';
+import { getDailyChallenge, completeDailyChallenge, isDailyChallengeCompleted, matchesDailyChallenge } from './dailyChallenge.js';
+import { playLaunchSound, playExplosion, playSuccess, playFailure, playAchievementUnlock, setSoundMuted, getSoundMuted, playUITap } from './sounds.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -15,7 +18,7 @@ const renderer = new Renderer(ctx);
 const input = new Input(canvas);
 
 const HIT_DISTANCE = 40;
-const STATE = { MENU: 0, SELECT: 1, SETTINGS: 2, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7, UPGRADE: 8 };
+const STATE = { MENU: 0, HOW_TO_PLAY: 11, SELECT: 1, MISSILE_SELECT: 10, SETTINGS: 2, ACHIEVEMENTS: 12, LAUNCH_INTRO: 3, PLAYING: 4, RELAUNCH: 5, WIN: 6, LOSE: 7, UPGRADE: 8, PAUSED: 9 };
 
 let state = STATE.MENU;
 let missile = null;
@@ -25,6 +28,8 @@ let terrain = null;
 let level = 1;
 let selectedAircraft = null;
 let selectIndex = 0;
+let selectedMissileType = MISSILE_TYPES[0];
+let missileSelectIndex = 0;
 let samCount = 1;
 let gameMode = 'easy';
 let targetVisible = true;
@@ -32,6 +37,12 @@ let explosionProgress = 0;
 let explosionPos = { x: 0, y: 0 };
 let loseReason = '';
 let lastTime = 0;
+let unlockedAchievement = null;
+let unlockedAchievementTime = 0;
+let aircraftUsageCount = {};
+let missileUsageCount = {};
+let gameStartTime = 0;
+let noHitTaken = false;
 
 let friendlyJet = null;
 
@@ -87,10 +98,75 @@ function startLevel() {
     };
 
     explosionProgress = 0;
+    gameStartTime = performance.now();
+    noHitTaken = true;
     state = STATE.LAUNCH_INTRO;
 }
 
+function checkAchievements(winCondition = false) {
+    if (winCondition) {
+        // First blood
+        if (level === 1 && !isAchievementUnlocked('first_blood')) {
+            unlockAchievement('first_blood');
+            unlockedAchievement = 'first_blood';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+
+        // Level milestones
+        if (level >= 5 && !isAchievementUnlocked('level_5_survivor')) {
+            unlockAchievement('level_5_survivor');
+            unlockedAchievement = 'level_5_survivor';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+        if (level >= 10 && !isAchievementUnlocked('level_10_master')) {
+            unlockAchievement('level_10_master');
+            unlockedAchievement = 'level_10_master';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+
+        // Realistic mode
+        if (gameMode === 'realistic' && !isAchievementUnlocked('realistic_rookie')) {
+            unlockAchievement('realistic_rookie');
+            unlockedAchievement = 'realistic_rookie';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+
+        // Perfect strike
+        if (noHitTaken && !isAchievementUnlocked('perfect_strike')) {
+            unlockAchievement('perfect_strike');
+            unlockedAchievement = 'perfect_strike';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+
+        // SAM survivor
+        if (level >= 5 && samCount >= 5 && !isAchievementUnlocked('sam_survivor')) {
+            unlockAchievement('sam_survivor');
+            unlockedAchievement = 'sam_survivor';
+            unlockedAchievementTime = 3;
+            playAchievementUnlock();
+        }
+
+        // Daily challenge
+        if (matchesDailyChallenge(level, gameMode, selectedMissileType.id, samCount) && !isDailyChallengeCompleted()) {
+            completeDailyChallenge();
+        }
+    }
+}
+
 function update(dt) {
+    if (unlockedAchievementTime > 0) {
+        unlockedAchievementTime -= dt;
+    }
+
+    if (state === STATE.PAUSED) {
+        return;
+    }
+
     if (state === STATE.LAUNCH_INTRO) {
         const w = canvas.width;
         const jet = friendlyJet;
@@ -109,8 +185,9 @@ function update(dt) {
             jet.phase = 'exit';
             jet.angle = -0.6;
             jet.speed = 400;
-            missile = new Missile(jet.x + 20, jet.y, 0);
+            missile = new Missile(jet.x + 20, jet.y, 0, selectedMissileType);
             missile.graceTimer = 0.5;
+            playLaunchSound();
 
             state = STATE.PLAYING;
             plane.introMode = false;
@@ -135,7 +212,7 @@ function update(dt) {
         plane.update(dt, missile);
         for (const s of sams) s.update(dt, missile);
 
-        targetVisible = (gameMode === 'easy') || missile.isInCone(plane, plane.radarSignature || 400);
+        targetVisible = (gameMode === 'easy') || missile.isInCone(plane, missile.detectionRange);
 
         if (missile.graceTimer <= 0) {
             const SAM_HIT_DIST = 16;
@@ -160,16 +237,20 @@ function update(dt) {
             missile.graceTimer -= dt;
         } else if (distance(missile, plane) < HIT_DISTANCE) {
             plane.hitPoints--;
+            noHitTaken = false;
+            playHit();
             if (plane.hitPoints <= 0) {
                 state = STATE.WIN;
                 explosionPos = { x: plane.x, y: plane.y };
                 explosionProgress = 0;
+                playSuccess();
+                checkAchievements(true);
             } else {
                 plane.speed += 20;
                 const w = canvas.width;
                 const groundY = terrain.getGroundY(w * 0.1);
                 const spawnY = Math.min(canvas.height * 0.7, groundY - 50);
-                missile = new Missile(w * 0.1, spawnY, 0);
+                missile = new Missile(w * 0.1, spawnY, 0, selectedMissileType);
                 missile.graceTimer = 1.0;
                 friendlyJet = {
                     x: w * 0.1 - 30,
@@ -219,7 +300,18 @@ function draw() {
     renderer.clear(canvas.width, canvas.height);
 
     if (state === STATE.MENU) {
-        renderer.drawMessage('MISSILE PURSUIT', 'Tap to start', canvas.width, canvas.height);
+        renderer.drawMenuButtons(canvas.width, canvas.height);
+        return;
+    }
+
+    if (state === STATE.HOW_TO_PLAY) {
+        renderer.drawHowToPlay(canvas.width, canvas.height);
+        return;
+    }
+
+    if (state === STATE.ACHIEVEMENTS) {
+        const stats = getAchievementStats();
+        renderer.drawAchievements(ACHIEVEMENTS, stats, canvas.width, canvas.height);
         return;
     }
 
@@ -230,7 +322,15 @@ function draw() {
     }
 
     if (state === STATE.SETTINGS) {
-        renderer.drawSettings(samCount, gameMode, isModeLocked('realistic'), getMaxSams(), canvas.width, canvas.height);
+        const dailyChallenge = getDailyChallenge();
+        const dailyCompleted = isDailyChallengeCompleted();
+        renderer.drawSettings(samCount, gameMode, isModeLocked('realistic'), getMaxSams(), canvas.width, canvas.height, dailyChallenge, dailyCompleted);
+        return;
+    }
+
+    if (state === STATE.MISSILE_SELECT) {
+        const lockedIds = MISSILE_TYPES.map(m => isMissileLocked(m.id));
+        renderer.drawMissileSelect(MISSILE_TYPES, lockedIds, canvas.width, canvas.height);
         return;
     }
 
@@ -253,7 +353,7 @@ function draw() {
     if (friendlyJet) renderer.drawFriendlyJet(friendlyJet);
 
     if (gameMode === 'realistic' && missile && missile.alive) {
-        renderer.drawRadarCone(missile, plane ? plane.radarSignature : 400);
+        renderer.drawRadarCone(missile, missile.detectionRange);
     }
 
     if (plane && (targetVisible || state !== STATE.PLAYING)) renderer.drawPlane(plane);
@@ -265,6 +365,10 @@ function draw() {
 
     if (plane) {
         renderer.drawLevel(level, plane.evasionLevel, canvas.width);
+    }
+
+    if (missile && state === STATE.PLAYING) {
+        renderer.drawMissileType(missile.type, canvas.width);
     }
 
     if (input.active && state === STATE.PLAYING) {
@@ -287,7 +391,7 @@ function draw() {
         renderer.drawSAM(s);
     }
 
-    if (gameMode === 'realistic' && missile && missile.alive && state === STATE.PLAYING) {
+    if (gameMode === 'realistic' && missile && missile.alive && (state === STATE.PLAYING || state === STATE.PAUSED)) {
         renderer.drawDatalink(missile, plane, sams, canvas.width, canvas.height);
     }
 
@@ -296,7 +400,22 @@ function draw() {
             renderer.drawExplosion(explosionPos.x, explosionPos.y, explosionProgress);
         }
         renderer.drawMessage(loseReason, null, canvas.width, canvas.height);
-        renderer.drawEndButtons('RETRY', 'CHANGE AIRCRAFT', canvas.width, canvas.height);
+        renderer.drawLoseButtons(canvas.width, canvas.height);
+    }
+
+    if (state === STATE.PLAYING) {
+        renderer.drawPauseButtons(canvas.width, canvas.height);
+    }
+
+    if (state === STATE.PAUSED) {
+        renderer.drawPauseMenu(canvas.width, canvas.height);
+    }
+
+    if (unlockedAchievementTime > 0 && unlockedAchievement) {
+        const ach = ACHIEVEMENTS.find(a => a.id === unlockedAchievement);
+        if (ach) {
+            renderer.drawAchievementNotification(ach, canvas.width, canvas.height);
+        }
     }
 }
 
@@ -325,6 +444,27 @@ function getSelectBoxes() {
         h: boxH,
         index: i
     }));
+}
+
+function getMissileSelectBoxes() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const boxW = w * 0.7;
+    const boxH = h * 0.12;
+    const startY = h * 0.25;
+    const gap = boxH + h * 0.03;
+    return MISSILE_TYPES.map((m, i) => ({
+        x: (w - boxW) / 2,
+        y: startY + i * gap,
+        w: boxW,
+        h: boxH,
+        index: i
+    }));
+}
+
+function isMissileLocked(missileId) {
+    if (missileId === 'standard') return false;
+    return !isUnlocked();
 }
 
 function getEndButtons() {
@@ -368,9 +508,81 @@ function getSettingsButtons() {
     };
 }
 
+function getPauseButtons() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnW = w * 0.2;
+    const btnH = h * 0.05;
+    const gap = w * 0.02;
+    const btnY = h - btnH - gap;
+    const btnX = gap;
+    return {
+        pause: { x: btnX, y: btnY, w: btnW, h: btnH },
+        exit: { x: btnX + btnW + gap, y: btnY, w: btnW, h: btnH }
+    };
+}
+
+function getPauseMenuButtons() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnW = w * 0.35;
+    const btnH = h * 0.06;
+    const resumeX = (w - btnW) / 2;
+    const resumeY = h / 2 + 20 * renderer.s;
+    const exitY = resumeY + btnH + 15 * renderer.s;
+    return {
+        resume: { x: resumeX, y: resumeY, w: btnW, h: btnH },
+        exit: { x: resumeX, y: exitY, w: btnW, h: btnH }
+    };
+}
+
+function getLoseButtons() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnW = w * 0.28;
+    const btnH = h * 0.06;
+    const gap = w * 0.025;
+    const totalW = btnW * 3 + gap * 2;
+    const startX = (w - totalW) / 2;
+    const btnY = h / 2 + 30;
+    return {
+        retry: { x: startX, y: btnY, w: btnW, h: btnH },
+        aircraft: { x: startX + btnW + gap, y: btnY, w: btnW, h: btnH },
+        menu: { x: startX + btnW * 2 + gap * 2, y: btnY, w: btnW, h: btnH }
+    };
+}
+
 function handleTap() {
-    if (state === STATE.MENU) {
-        state = STATE.SELECT;
+    if (state === STATE.PAUSED) {
+        const btns = getPauseMenuButtons();
+        const tx = input.x;
+        const ty = input.y;
+        if (hitButton(btns.resume, tx, ty)) {
+            state = STATE.PLAYING;
+        } else if (hitButton(btns.exit, tx, ty)) {
+            state = STATE.SELECT;
+        }
+    } else if (state === STATE.MENU) {
+        const w = canvas.width;
+        const h = canvas.height;
+        const tx = input.x;
+        const ty = input.y;
+        const btnW = w * 0.35;
+        const btnH = h * 0.05;
+        const playBtn = { x: (w - btnW) / 2, y: h / 2 - 40, w: btnW, h: btnH };
+        const achBtn = { x: (w - btnW) / 2, y: h / 2 + 20, w: btnW, h: btnH };
+        const howBtn = { x: (w - btnW) / 2, y: h / 2 + 80, w: btnW, h: btnH };
+        if (hitButton(playBtn, tx, ty)) {
+            state = STATE.SELECT;
+        } else if (hitButton(achBtn, tx, ty)) {
+            state = STATE.ACHIEVEMENTS;
+        } else if (hitButton(howBtn, tx, ty)) {
+            state = STATE.HOW_TO_PLAY;
+        }
+    } else if (state === STATE.HOW_TO_PLAY) {
+        state = STATE.MENU;
+    } else if (state === STATE.ACHIEVEMENTS) {
+        state = STATE.MENU;
     } else if (state === STATE.SELECT) {
         const boxes = getSelectBoxes();
         const tx = input.x;
@@ -384,7 +596,7 @@ function handleTap() {
                 selectIndex = box.index;
                 selectedAircraft = AIRCRAFT[selectIndex];
                 level = 1;
-                state = STATE.SETTINGS;
+                state = STATE.MISSILE_SELECT;
                 return;
             }
         }
@@ -405,7 +617,24 @@ function handleTap() {
         } else if (hitButton(btns.plus, tx, ty)) {
             samCount = Math.min(getMaxSams(), samCount + 1);
         } else if (hitButton(btns.launch, tx, ty)) {
-            startLevel();
+            missileSelectIndex = 0;
+            state = STATE.MISSILE_SELECT;
+        }
+    } else if (state === STATE.MISSILE_SELECT) {
+        const boxes = getMissileSelectBoxes();
+        const tx = input.x;
+        const ty = input.y;
+        for (let i = 0; i < boxes.length; i++) {
+            const box = boxes[i];
+            if (tx >= box.x && tx <= box.x + box.w && ty >= box.y && ty <= box.y + box.h) {
+                if (!isMissileLocked(MISSILE_TYPES[i].id)) {
+                    selectedMissileType = MISSILE_TYPES[i];
+                    state = STATE.SETTINGS;
+                } else {
+                    state = STATE.UPGRADE;
+                }
+                return;
+            }
         }
     } else if (state === STATE.WIN && explosionProgress >= 1) {
         const btns = getEndButtons();
@@ -424,13 +653,15 @@ function handleTap() {
             }
         }
     } else if (state === STATE.LOSE) {
-        const btns = getEndButtons();
+        const btns = getLoseButtons();
         const tx = input.x;
         const ty = input.y;
-        if (hitButton(btns.right, tx, ty)) {
-            state = STATE.SELECT;
-        } else {
+        if (hitButton(btns.retry, tx, ty)) {
             startLevel();
+        } else if (hitButton(btns.aircraft, tx, ty)) {
+            state = STATE.SELECT;
+        } else if (hitButton(btns.menu, tx, ty)) {
+            state = STATE.SELECT;
         }
     } else if (state === STATE.UPGRADE) {
         const w = canvas.width;
@@ -453,6 +684,15 @@ function handleTap() {
                 if (restored) state = STATE.SELECT;
             });
         }
+    } else if (state === STATE.PLAYING) {
+        const btns = getPauseButtons();
+        const tx = input.x;
+        const ty = input.y;
+        if (hitButton(btns.pause, tx, ty)) {
+            state = STATE.PAUSED;
+        } else if (hitButton(btns.exit, tx, ty)) {
+            state = STATE.SELECT;
+        }
     }
 }
 
@@ -462,7 +702,13 @@ function init() {
 
     canvas.addEventListener('click', handleTap);
     canvas.addEventListener('touchstart', (e) => {
-        if (state !== STATE.PLAYING) {
+        const btns = getPauseButtons();
+        const tx = input.x;
+        const ty = input.y;
+        // Allow pause/exit button interactions during PLAYING
+        if (state === STATE.PLAYING && (hitButton(btns.pause, tx, ty) || hitButton(btns.exit, tx, ty))) {
+            handleTap();
+        } else if (state !== STATE.PLAYING) {
             handleTap();
         }
     });

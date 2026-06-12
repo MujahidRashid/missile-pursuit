@@ -1,21 +1,57 @@
 import { normalizeAngle } from './utils.js';
 
+export const MISSILE_TYPES = [
+    {
+        id: 'standard',
+        name: 'STANDARD',
+        speed: 220,
+        energy: 1.0,
+        energyDrain: 0.06,
+        turnSpeed: 3.5,
+        detectionRange: 400
+    },
+    {
+        id: 'advanced',
+        name: 'ADVANCED',
+        speed: 260,
+        energy: 1.3,
+        energyDrain: 0.05,
+        turnSpeed: 4.0,
+        detectionRange: 550
+    },
+    {
+        id: 'tactical',
+        name: 'TACTICAL',
+        speed: 300,
+        energy: 1.5,
+        energyDrain: 0.045,
+        turnSpeed: 4.5,
+        detectionRange: 700
+    }
+];
+
+export function getMissileTypeById(id) {
+    return MISSILE_TYPES.find(m => m.id === id) || MISSILE_TYPES[0];
+}
+
 export class Missile {
-    constructor(x, y, angle = -Math.PI / 2) {
+    constructor(x, y, angle = -Math.PI / 2, missileType = MISSILE_TYPES.basic) {
         this.x = x;
         this.y = y;
         this.angle = angle;
-        this.speed = 220;
-        this.energy = 1.0;
-        this.energyDrain = 0.06; // per second base drain
-        this.turnDrainMultiplier = 0.15; // extra drain per radian turned
+        this.speed = missileType.speed;
+        this.energy = missileType.energy;
+        this.energyDrain = missileType.energyDrain;
+        this.turnDrainMultiplier = 0.15;
         this.trail = [];
         this.maxTrailLength = 60;
         this.alive = true;
         this.targetAngle = this.angle;
-        this.turnSpeed = 3.5; // radians per second
+        this.turnSpeed = missileType.turnSpeed;
         this.coneHalfAngle = Math.PI / 4;
         this.graceTimer = 0;
+        this.type = missileType;
+        this.detectionRange = missileType.detectionRange;
     }
 
     isInCone(target, detectionRange = 800) {
