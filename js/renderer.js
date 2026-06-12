@@ -1107,21 +1107,23 @@ export class Renderer {
 
         // play button
         const btnW = width * 0.35;
-        const btnH = height * 0.05;
-        const playY = height / 2 - 40;
+        const btnH = height * 0.06;
+        const gap = height * 0.03;
+        const startY = height * 0.45;
 
+        // play button
         ctx.fillStyle = '#1a3355';
-        ctx.fillRect((width - btnW) / 2, playY, btnW, btnH);
+        ctx.fillRect((width - btnW) / 2, startY, btnW, btnH);
         ctx.strokeStyle = '#4488cc';
         ctx.lineWidth = 1.5;
-        ctx.strokeRect((width - btnW) / 2, playY, btnW, btnH);
+        ctx.strokeRect((width - btnW) / 2, startY, btnW, btnH);
         ctx.fillStyle = '#ffffff';
         ctx.font = `bold ${this.getResponsiveFont(14)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('PLAY', width / 2, playY + btnH / 2 + 4);
+        ctx.fillText('PLAY', width / 2, startY + btnH / 2 + 4);
 
         // achievements button
-        const achY = height / 2 + 20;
+        const achY = startY + btnH + gap;
         ctx.fillStyle = '#1a2a1a';
         ctx.fillRect((width - btnW) / 2, achY, btnW, btnH);
         ctx.strokeStyle = '#44cc88';
@@ -1130,10 +1132,10 @@ export class Renderer {
         ctx.fillStyle = '#44ff88';
         ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('ACHIEVEMENTS', width / 2, achY + btnH / 2 + 3);
+        ctx.fillText('ACHIEVEMENTS', width / 2, achY + btnH / 2 + 4);
 
         // how to play button
-        const howY = height / 2 + 80;
+        const howY = achY + btnH + gap;
         ctx.fillStyle = '#1a1a33';
         ctx.fillRect((width - btnW) / 2, howY, btnW, btnH);
         ctx.strokeStyle = '#666688';
@@ -1142,7 +1144,7 @@ export class Renderer {
         ctx.fillStyle = '#aaaacc';
         ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('HOW TO PLAY', width / 2, howY + btnH / 2 + 3);
+        ctx.fillText('HOW TO PLAY', width / 2, howY + btnH / 2 + 4);
     }
 
     drawAchievements(achievements, stats, width, height) {

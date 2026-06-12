@@ -570,10 +570,12 @@ function handleTap() {
         const tx = input.x;
         const ty = input.y;
         const btnW = w * 0.35;
-        const btnH = h * 0.05;
-        const playBtn = { x: (w - btnW) / 2, y: h / 2 - 40, w: btnW, h: btnH };
-        const achBtn = { x: (w - btnW) / 2, y: h / 2 + 20, w: btnW, h: btnH };
-        const howBtn = { x: (w - btnW) / 2, y: h / 2 + 80, w: btnW, h: btnH };
+        const btnH = h * 0.06;
+        const gap = h * 0.03;
+        const startY = h * 0.45;
+        const playBtn = { x: (w - btnW) / 2, y: startY, w: btnW, h: btnH };
+        const achBtn = { x: (w - btnW) / 2, y: startY + btnH + gap, w: btnW, h: btnH };
+        const howBtn = { x: (w - btnW) / 2, y: startY + btnH * 2 + gap * 2, w: btnW, h: btnH };
         if (hitButton(playBtn, tx, ty)) {
             state = STATE.SELECT;
         } else if (hitButton(achBtn, tx, ty)) {
