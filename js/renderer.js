@@ -600,57 +600,63 @@ export class Renderer {
         }
 
         // mode selection
+        let currentY = modeY;
         ctx.fillStyle = '#8899aa';
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText('MODE', width / 2, modeY);
+        ctx.fillText('MODE', width / 2, currentY);
+        currentY += height * 0.05;
 
         const modeBtnW = width * 0.3;
-        const modeBtnH = height * 0.055;
-        const modeBtnY = modeY + height * 0.04;
+        const modeBtnH = height * 0.05;
         const modeGap = width * 0.04;
         const modeTotalW = modeBtnW * 2 + modeGap;
         const modeStartX = (width - modeTotalW) / 2;
 
         // easy button
         ctx.fillStyle = gameMode === 'easy' ? '#1a4433' : '#1a1a33';
-        ctx.fillRect(modeStartX, modeBtnY, modeBtnW, modeBtnH);
+        ctx.fillRect(modeStartX, currentY, modeBtnW, modeBtnH);
         ctx.strokeStyle = gameMode === 'easy' ? '#44cc88' : '#444466';
         ctx.lineWidth = 2;
-        ctx.strokeRect(modeStartX, modeBtnY, modeBtnW, modeBtnH);
+        ctx.strokeRect(modeStartX, currentY, modeBtnW, modeBtnH);
         ctx.fillStyle = gameMode === 'easy' ? '#44ff88' : '#888888';
-        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
-        ctx.fillText('EASY', modeStartX + modeBtnW / 2, modeBtnY + modeBtnH / 2 + 5);
+        ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('EASY', modeStartX + modeBtnW / 2, currentY + modeBtnH / 2 + 4);
 
         // realistic button
         const realX = modeStartX + modeBtnW + modeGap;
         ctx.fillStyle = gameMode === 'realistic' ? '#1a2244' : '#1a1a33';
-        ctx.fillRect(realX, modeBtnY, modeBtnW, modeBtnH);
+        ctx.fillRect(realX, currentY, modeBtnW, modeBtnH);
         ctx.strokeStyle = realisticLocked ? '#333333' : (gameMode === 'realistic' ? '#4488ff' : '#444466');
         ctx.lineWidth = 2;
-        ctx.strokeRect(realX, modeBtnY, modeBtnW, modeBtnH);
+        ctx.strokeRect(realX, currentY, modeBtnW, modeBtnH);
         ctx.fillStyle = realisticLocked ? '#666666' : (gameMode === 'realistic' ? '#66aaff' : '#888888');
-        ctx.font = `bold ${this.getResponsiveFont(13)}px monospace`;
-        ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, modeBtnY + modeBtnH / 2 + 5);
+        ctx.font = `bold ${this.getResponsiveFont(12)}px monospace`;
+        ctx.fillText(realisticLocked ? 'REALISTIC [PRO]' : 'REALISTIC', realX + modeBtnW / 2, currentY + modeBtnH / 2 + 4);
+
+        currentY += modeBtnH + height * 0.04;
 
         // mode description
         ctx.fillStyle = '#556677';
-        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
-        const descY = modeBtnY + modeBtnH + 25;
+        ctx.font = `${this.getResponsiveFont(9)}px monospace`;
+        ctx.textAlign = 'center';
         if (gameMode === 'easy') {
-            ctx.fillText('Full visibility - see everything', width / 2, descY);
+            ctx.fillText('Full visibility - see everything', width / 2, currentY);
         } else {
-            ctx.fillText('Radar cone + datalink only', width / 2, descY);
+            ctx.fillText('Radar cone + datalink only', width / 2, currentY);
         }
+
+        currentY += height * 0.08;
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText('SAM SITES', width / 2, descY + height * 0.12);
+        ctx.fillText('SAM SITES', width / 2, currentY);
 
         // minus button
         const btnSize = Math.min(width * 0.12, 50 * this.s);
-        const samLabelY = descY + height * 0.12;
-        const centerY = samLabelY + height * 0.07;
+        currentY += height * 0.05;
+        const centerY = currentY;
 
         ctx.fillStyle = '#1a2233';
         ctx.fillRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
@@ -691,17 +697,18 @@ export class Renderer {
 
         // difficulty hint
         ctx.fillStyle = '#556677';
-        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        ctx.textAlign = 'center';
         const hints = ['', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Insane'];
         let hint = hints[samCount] || '';
         if (maxSams < 5 && samCount >= maxSams) hint += ' (max in free)';
-        ctx.fillText(hint, width / 2, height * 0.505);
+        ctx.fillText(hint, width / 2, centerY + height * 0.15);
 
         // launch button
         const launchW = width * 0.4;
         const launchH = height * 0.07;
         const launchX = (width - launchW) / 2;
-        const launchY = height * 0.62;
+        const launchY = centerY + height * 0.28;
 
         const pulse = 0.8 + Math.sin(t * 3) * 0.2;
         ctx.fillStyle = '#1a3355';
