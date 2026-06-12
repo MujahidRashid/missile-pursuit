@@ -10,7 +10,7 @@ import { isUnlocked, purchaseFullGame, restorePurchases, initStore, isAircraftLo
 import { initAds, showInterstitial } from './ads.js';
 import { unlockAchievement, isAchievementUnlocked, getAchievementStats, ACHIEVEMENTS } from './achievements.js';
 import { getDailyChallenge, completeDailyChallenge, isDailyChallengeCompleted, matchesDailyChallenge } from './dailyChallenge.js';
-import { playLaunchSound, playExplosion, playSuccess, playFailure, playAchievementUnlock, setSoundMuted, getSoundMuted, playUITap } from './sounds.js';
+import { playLaunchSound, playHit, playExplosion, playSuccess, playFailure, playAchievementUnlock, setSoundMuted, getSoundMuted, playUITap } from './sounds.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -239,12 +239,14 @@ function update(dt) {
             plane.hitPoints--;
             noHitTaken = false;
             playHit();
+            console.log('HIT! hitPoints remaining:', plane.hitPoints);
             if (plane.hitPoints <= 0) {
                 state = STATE.WIN;
                 explosionPos = { x: plane.x, y: plane.y };
                 explosionProgress = 0;
                 playSuccess();
                 checkAchievements(true);
+                console.log('WIN STATE SET');
             } else {
                 plane.speed += 20;
                 const w = canvas.width;
