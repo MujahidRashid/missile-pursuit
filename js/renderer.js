@@ -635,20 +635,22 @@ export class Renderer {
         // mode description
         ctx.fillStyle = '#556677';
         ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        const descY = modeBtnY + modeBtnH + 25;
         if (gameMode === 'easy') {
-            ctx.fillText('Full visibility - see everything', width / 2, modeBtnY + modeBtnH + 30);
+            ctx.fillText('Full visibility - see everything', width / 2, descY);
         } else {
-            ctx.fillText('Radar cone + datalink only', width / 2, modeBtnY + modeBtnH + 30);
+            ctx.fillText('Radar cone + datalink only', width / 2, descY);
         }
 
         // SAM count label
         ctx.fillStyle = '#8899aa';
         ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText('SAM SITES', width / 2, height * 0.32);
+        ctx.fillText('SAM SITES', width / 2, descY + height * 0.12);
 
         // minus button
         const btnSize = Math.min(width * 0.12, 50 * this.s);
-        const centerY = height * 0.37;
+        const samLabelY = descY + height * 0.12;
+        const centerY = samLabelY + height * 0.07;
 
         ctx.fillStyle = '#1a2233';
         ctx.fillRect(width * 0.25 - btnSize / 2, centerY - btnSize / 2, btnSize, btnSize);
