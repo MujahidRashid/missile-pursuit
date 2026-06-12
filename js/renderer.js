@@ -1152,28 +1152,30 @@ export class Renderer {
 
         // title
         ctx.fillStyle = '#44ff88';
-        ctx.font = `bold ${this.getResponsiveFont(28)}px monospace`;
+        ctx.font = `bold ${this.getResponsiveFont(26)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('ACHIEVEMENTS', width / 2, height * 0.1);
+        ctx.fillText('ACHIEVEMENTS', width / 2, height * 0.08);
 
         // stats bar
         ctx.fillStyle = '#aabbcc';
-        ctx.font = `${this.getResponsiveFont(12)}px monospace`;
-        ctx.fillText(`${stats.unlockedCount} / ${stats.total} (${stats.percentage}%)`, width / 2, height * 0.15);
+        ctx.font = `${this.getResponsiveFont(11)}px monospace`;
+        ctx.fillText(`${stats.unlockedCount} / ${stats.total} (${stats.percentage}%)`, width / 2, height * 0.13);
 
         // achievements grid
         const cols = 2;
-        const itemW = width * 0.4;
-        const itemH = height * 0.15;
-        const startX = (width - itemW * cols - width * 0.08) / 2;
-        const startY = height * 0.22;
+        const itemW = width * 0.42;
+        const itemH = height * 0.17;
+        const gapX = width * 0.03;
+        const startX = (width - itemW * cols - gapX) / 2;
+        const startY = height * 0.19;
         const gapY = height * 0.02;
 
         let y = startY;
         for (let i = 0; i < achievements.length; i += cols) {
             for (let j = 0; j < cols && i + j < achievements.length; j++) {
                 const ach = achievements[i + j];
-                const x = startX + j * (itemW + width * 0.04);
+                const x = startX + j * (itemW + gapX);
+                const padding = 8;
 
                 // background
                 ctx.fillStyle = '#111122';
@@ -1184,29 +1186,37 @@ export class Renderer {
 
                 // icon
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${this.getResponsiveFont(24)}px monospace`;
+                ctx.font = `bold ${this.getResponsiveFont(20)}px monospace`;
                 ctx.textAlign = 'center';
-                ctx.fillText(ach.icon, x + itemW * 0.15, y + itemH * 0.4);
+                ctx.fillText(ach.icon, x + padding + 10, y + itemH * 0.35);
 
                 // name
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${this.getResponsiveFont(10)}px monospace`;
+                ctx.font = `bold ${this.getResponsiveFont(9)}px monospace`;
                 ctx.textAlign = 'left';
-                ctx.fillText(ach.name, x + itemW * 0.35, y + itemH * 0.35);
+                const nameX = x + padding + 25;
+                const maxNameWidth = itemW - 35;
+                ctx.fillText(ach.name.substring(0, 12), nameX, y + itemH * 0.3);
 
-                // description
+                // description - wrapped
                 ctx.fillStyle = '#8899aa';
-                ctx.font = `${this.getResponsiveFont(8)}px monospace`;
-                ctx.fillText(ach.description, x + itemW * 0.35, y + itemH * 0.65);
+                ctx.font = `${this.getResponsiveFont(7)}px monospace`;
+                ctx.textAlign = 'left';
+                const descLines = this.wrapText(ctx, ach.description, maxNameWidth);
+                const descY = y + itemH * 0.55;
+                const lineHeight = 10;
+                descLines.slice(0, 2).forEach((line, idx) => {
+                    ctx.fillText(line, nameX, descY + idx * lineHeight);
+                });
             }
             y += itemH + gapY;
         }
 
         // back text
         ctx.fillStyle = '#888899';
-        ctx.font = `${this.getResponsiveFont(10)}px monospace`;
+        ctx.font = `${this.getResponsiveFont(9)}px monospace`;
         ctx.textAlign = 'center';
-        ctx.fillText('Tap to return', width / 2, height - 20 * this.s);
+        ctx.fillText('Tap to return', width / 2, height - 15 * this.s);
     }
 
     drawAchievementNotification(achievement, width, height) {
