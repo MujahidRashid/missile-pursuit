@@ -617,8 +617,7 @@ function handleTap() {
         } else if (hitButton(btns.plus, tx, ty)) {
             samCount = Math.min(getMaxSams(), samCount + 1);
         } else if (hitButton(btns.launch, tx, ty)) {
-            missileSelectIndex = 0;
-            state = STATE.MISSILE_SELECT;
+            startLevel();
         }
     } else if (state === STATE.MISSILE_SELECT) {
         const boxes = getMissileSelectBoxes();
